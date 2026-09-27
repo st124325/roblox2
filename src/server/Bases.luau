@@ -14,6 +14,7 @@ local KaijuModel = require(Shared:WaitForChild("KaijuModel"))
 
 local Server = script.Parent
 local Data = require(Server:WaitForChild("Data"))
+local Events = require(Server:WaitForChild("Events"))
 local Map = require(Server:WaitForChild("Map"))
 
 -- ---------------------------------------------------------------------------
@@ -277,6 +278,7 @@ local function placeModelOnPad(player: Player, slot: number, entry: SlotEntry): 
 		Data.addMoney(player, refund)
 		Net.event("Cash"):FireClient(player, refund, pad.Position + Vector3.new(0, 3, 0))
 		notify(player, "good", "Sold " .. currentDef.Name .. " for " .. Format.money(refund))
+		Events.Sold:Fire(player, currentDef.Id, refund)
 		refreshIncomeAttribute(player)
 	end)
 
@@ -586,6 +588,7 @@ local function setupCollectPlate(base: BaseInfo)
 		profile.Bank = 0
 		Data.addMoney(player, amount)
 		updateBankDisplay(base, 0)
+		Events.Collected:Fire(player, amount)
 		Net.event("Cash"):FireClient(player, amount, base.CollectPlate.Position + Vector3.new(0, 3, 0))
 	end)
 end
@@ -622,7 +625,29 @@ local function setupLockButton(base: BaseInfo)
 		lockCooldowns[base.Index] = now + Config.LockSeconds + Config.LockCooldown
 		base.Barrier.Transparency = 0.4
 		notify(player, "info", "Base locked for " .. Format.time(Config.LockSeconds))
+		Events.Locked:Fire(player)
 	end)
+end
+
+-- Extend the owner's lock by `seconds` (Shield purchases); stacks on a running lock.
+function Bases.lockFor(player: Player, seconds: number): boolean
+	local idx = baseByPlayer[player]
+	local base = idx and Map.Bases[idx]
+	if not base then
+		return false
+	end
+	local now = os.clock()
+	local from = math.max(lockEndTimes[base.Index] or now, now)
+	lockEndTimes[base.Index] = from + seconds
+	lockCooldowns[base.Index] = from + seconds + Config.LockCooldown
+	base.Barrier.Transparency = 0.4
+	return true
+end
+
+function Bases.lockRemaining(player: Player): number
+	local idx = baseByPlayer[player]
+	local endTime = idx and lockEndTimes[idx]
+	return if endTime then math.max(0, endTime - os.clock()) else 0
 end
 
 -- ---------------------------------------------------------------------------
@@ -739,6 +764,7 @@ local function setupRemotes()
 		if rebirthBase then
 			refreshPads(rebirthBase, Bases.unlockedSlots(player))
 		end
+		Events.Rebirthed:Fire(player, profile.Rebirths)
 		notify(player, "good", "Rebirth #" .. profile.Rebirths .. "! +50% income, +" .. Config.SlotsPerRebirth .. " slot(s)")
 	end)
 end
@@ -810,6 +836,7 @@ local function onHeartbeat(dt: number)
 						removeModelFromPad(owner, slot)
 						placeModelOnPad(owner, slot, entry)
 						needRefreshIncome = true
+						Events.StageUp:Fire(owner, slot, newStage.Name)
 					else
 						-- Update tag info (income may change due to growth, but stage same)
 						if prevStageIdx[owner] then

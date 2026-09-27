@@ -15,6 +15,7 @@ local Net = require(Shared:WaitForChild("Net"))
 
 local Server = script.Parent
 local Data = require(Server:WaitForChild("Data"))
+local Events = require(Server:WaitForChild("Events"))
 local Map = require(Server:WaitForChild("Map"))
 local Bases = require(Server:WaitForChild("Bases"))
 
@@ -80,6 +81,7 @@ local function onPromptTriggered(prompt: ProximityPrompt, player: Player)
 
 	-- Track stats
 	profile.Stats.Bought += 1
+	Events.Bought:Fire(player, def.Id)
 
 	-- Remove from conveyor
 	removeFromBelt(model :: Model)
@@ -94,6 +96,7 @@ local function spawnKaiju()
 
 	local model = KaijuModel.build(def, 1, nil)
 	model.Name = "BeltKaiju_" .. def.Id
+	model:SetAttribute("Price", def.Price) -- the tutorial beam points at an affordable one
 
 	local root = model.PrimaryPart
 	if not root then

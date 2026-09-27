@@ -23,6 +23,7 @@ export type Profile = {
 	Rebirths: number,
 	Slots: { [number]: SlotEntry },
 	Bank: number,
+	Meta: { [string]: any }, -- free-form saved state for newer systems (tutorial, purchases, boosts)
 	LastOnline: number,
 	Reserved: { [number]: SlotEntry }?, -- slots whose kaiju a thief is carrying (saved as normal slots)
 	Stats: {
@@ -39,6 +40,7 @@ type StoredProfileData = {
 	Rebirths: number,
 	Slots: StoredSlots,
 	Bank: number,
+	Meta: { [string]: any }, -- free-form saved state for newer systems (tutorial, purchases, boosts)
 	LastOnline: number,
 	Stats: {
 		Bought: number,
@@ -183,12 +185,36 @@ local function createDefaultProfile(): Profile
 		Slots = {},
 		Bank = 0,
 		LastOnline = os.time(),
+		Meta = {},
 		Stats = {
 			Bought = 0,
 			Stolen = 0,
 			Lost = 0,
 		},
 	}
+end
+
+-- Keep only DataStore-safe values (string keys; numbers, strings, booleans, nested tables).
+local function sanitizeMeta(value: any, depth: number?): { [string]: any }
+	local out = {}
+	if typeof(value) ~= "table" or (depth or 0) > 4 then
+		return out
+	end
+	for k, v in value do
+		if typeof(k) == "string" then
+			local t = typeof(v)
+			if t == "number" then
+				if v == v and v ~= math.huge and v ~= -math.huge then
+					out[k] = v
+				end
+			elseif t == "string" or t == "boolean" then
+				out[k] = v
+			elseif t == "table" then
+				out[k] = sanitizeMeta(v, (depth or 0) + 1)
+			end
+		end
+	end
+	return out
 end
 
 local function serializeProfile(profile: Profile): StoredProfileData
@@ -233,6 +259,7 @@ local function serializeProfile(profile: Profile): StoredProfileData
 		Slots = storedSlots,
 		Bank = if typeof(profile.Bank) == "number" then math.max(0, profile.Bank) else 0,
 		LastOnline = if typeof(profile.LastOnline) == "number" then profile.LastOnline else os.time(), -- Bases keeps it fresh while the player owns a base
+		Meta = sanitizeMeta(profile.Meta),
 		Stats = {
 			Bought = bought,
 			Stolen = stolen,
@@ -283,6 +310,7 @@ local function deserializeProfile(raw: any): Profile
 		Slots = slots,
 		Bank = if typeof(raw.Bank) == "number" and raw.Bank >= 0 then raw.Bank else 0,
 		LastOnline = if typeof(raw.LastOnline) == "number" and raw.LastOnline > 0 then raw.LastOnline else os.time(),
+		Meta = sanitizeMeta(raw.Meta),
 		Stats = stats,
 	}
 end

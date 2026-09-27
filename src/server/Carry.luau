@@ -11,9 +11,11 @@ local Config = require(Shared:WaitForChild("Config"))
 local Kaiju = require(Shared:WaitForChild("Kaiju"))
 local KaijuModel = require(Shared:WaitForChild("KaijuModel"))
 local Net = require(Shared:WaitForChild("Net"))
+local Sounds = require(Shared:WaitForChild("Sounds"))
 
 local Server = script.Parent
 local Data = require(Server:WaitForChild("Data"))
+local Events = require(Server:WaitForChild("Events"))
 local Map = require(Server:WaitForChild("Map"))
 local Bases = require(Server:WaitForChild("Bases"))
 
@@ -132,6 +134,7 @@ local function deliverKaiju(state: CarryState)
 		ownerProfile.Stats.Lost += 1
 	end
 	Net.event("Notify"):FireClient(thief, "good", "Delivered " .. defName .. "!")
+	Events.Stolen:Fire(thief, state.owner, state.entry.Id)
 end
 
 -- ── attach model above thief's head ───────────────────────────────────────────
@@ -358,6 +361,7 @@ local function onStealTriggered(prompt: ProximityPrompt, player: Player)
 	-- Notify the owner
 	local defName = (Kaiju.get(entry.Id) or { Name = "Kaiju" }).Name
 	Net.event("Robbed"):FireClient(owner, player.Name, defName)
+	Events.Robbed:Fire(owner, player, entry.Id)
 
 	-- Setup zone delivery detection
 	setupZoneDetection(state)
@@ -520,6 +524,7 @@ local function onBonkActivated(player: Player)
 		local flat = Vector3.new(offset.X, 0, offset.Z)
 		local push = if flat.Magnitude > 0.1 then flat.Unit else (hrp :: BasePart).CFrame.LookVector
 		;(targetHrp :: BasePart).AssemblyLinearVelocity = push * 45 + Vector3.new(0, 25, 0)
+		Sounds.playAt(targetHrp :: BasePart, "Bonk")
 
 		local stunEnd = now + Config.BonkStunSeconds
 		stunned[target] = stunEnd

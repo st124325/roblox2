@@ -70,6 +70,8 @@ local Config = {
 	},
 	Mutations = { "Radioactive", "Golden", "Rainbow", "Galaxy" },
 
+	TutorialReward = 100, -- cash for finishing the first-session tutorial
+
 	-- Data persistence
 	StartMoney = 50,
 	DataStoreName = "PlayerData_v1",

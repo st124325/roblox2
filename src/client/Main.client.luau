@@ -10,12 +10,15 @@ local Net = require(Shared:WaitForChild("Net"))
 local Hud = require(script.Parent:WaitForChild("Hud"))
 local Toasts = require(script.Parent:WaitForChild("Toasts"))
 local FloatingText = require(script.Parent:WaitForChild("FloatingText"))
+local Tutorial = require(script.Parent:WaitForChild("Tutorial"))
+local Sounds = require(Shared:WaitForChild("Sounds"))
 
 local player = Players.LocalPlayer
 
 -- 1. Initialize UI elements
 local screenGui = Hud.init(player)
 Toasts.init(screenGui)
+Tutorial.init(screenGui)
 
 -- 2. Read and apply initial attributes
 local function readAttributeNumber(name: string): number
@@ -36,8 +39,15 @@ player:GetAttributeChangedSignal("Income"):Connect(function()
 	Hud.setIncome(readAttributeNumber("Income"))
 end)
 
+local lastRebirths = readAttributeNumber("Rebirths")
 player:GetAttributeChangedSignal("Rebirths"):Connect(function()
-	Hud.setRebirths(readAttributeNumber("Rebirths"))
+	local rebirths = readAttributeNumber("Rebirths")
+	Hud.setRebirths(rebirths)
+	-- The saved count arrives from 0 on join; only a real rebirth is one more than a nonzero count
+	if rebirths == lastRebirths + 1 and (lastRebirths > 0 or time() > 15) then
+		Sounds.play("Rebirth")
+	end
+	lastRebirths = rebirths
 end)
 
 -- 4. Listen to server network events
@@ -45,18 +55,25 @@ Net.event("Notify").OnClientEvent:Connect(function(kind: any, text: any)
 	local kindStr = if typeof(kind) == "string" then kind else "info"
 	local textStr = if typeof(text) == "string" then text else tostring(text or "")
 	Toasts.show(kindStr, textStr)
+	if kindStr == "good" then
+		Sounds.play("Good")
+	elseif kindStr == "bad" then
+		Sounds.play("Bad")
+	end
 end)
 
 Net.event("Robbed").OnClientEvent:Connect(function(thiefName: any, kaijuName: any)
 	local thief = if typeof(thiefName) == "string" and thiefName ~= "" then thiefName else "A thief"
 	local kaiju = if typeof(kaijuName) == "string" and kaijuName ~= "" then kaijuName else "your Kaiju"
 	Toasts.showRobbedAlert(thief, kaiju)
+	Sounds.play("Alarm")
 end)
 
 Net.event("Cash").OnClientEvent:Connect(function(amount: any, worldPosition: any)
 	local amountNum = if typeof(amount) == "number" then amount else tonumber(amount) or 0
 	local pos = if typeof(worldPosition) == "Vector3" then worldPosition else nil
 	FloatingText.spawn(amountNum, pos)
+	Sounds.play("Cash")
 end)
 
 -- 5. Action Button Callbacks
