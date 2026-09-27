@@ -3,6 +3,7 @@
 local Server = script.Parent
 
 local Map = require(Server.Map)
+local Localization = require(Server.Localization)
 local Data = require(Server.Data)
 local Bases = require(Server.Bases)
 local Conveyor = require(Server.Conveyor)
@@ -11,6 +12,7 @@ local Tutorial = require(Server.Tutorial)
 local Feedback = require(Server.Feedback)
 local Shop = require(Server.Shop)
 
+Localization.init()
 Map.build()
 Bases.init()
 Carry.init()

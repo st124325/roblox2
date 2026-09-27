@@ -5,7 +5,8 @@ local Config = require(script.Parent.Config)
 
 export type KaijuDef = {
 	Id: string,
-	Name: string,
+	Name: string, -- English (source language)
+	NameRu: string?, -- Russian, served through the LocalizationTable
 	Rarity: string,
 	Price: number,
 	Income: number,
@@ -49,7 +50,8 @@ Kaiju.List = {
 	-- =========================================================================
 	{
 		Id = "toastosaurus",
-		Name = "Тостозавр",
+		Name = "Toastosaurus",
+		NameRu = "Тостозавр",
 		Rarity = "Common",
 		Price = 15,
 		Income = 0.75,
@@ -59,7 +61,8 @@ Kaiju.List = {
 	},
 	{
 		Id = "mudpup",
-		Name = "Грязепупс",
+		Name = "Mudpup",
+		NameRu = "Грязепупс",
 		Rarity = "Common",
 		Price = 40,
 		Income = 1.8,
@@ -69,7 +72,8 @@ Kaiju.List = {
 	},
 	{
 		Id = "craboid",
-		Name = "Крабоид",
+		Name = "Craboid",
+		NameRu = "Крабоид",
 		Rarity = "Common",
 		Price = 100,
 		Income = 4,
@@ -79,7 +83,8 @@ Kaiju.List = {
 	},
 	{
 		Id = "chirik",
-		Name = "Чирик",
+		Name = "Chirpy",
+		NameRu = "Чирик",
 		Rarity = "Common",
 		Price = 220,
 		Income = 8,
@@ -89,7 +94,8 @@ Kaiju.List = {
 	},
 	{
 		Id = "nosatik",
-		Name = "Носатик",
+		Name = "Nosey",
+		NameRu = "Носатик",
 		Rarity = "Common",
 		Price = 500,
 		Income = 16,
@@ -103,7 +109,8 @@ Kaiju.List = {
 	-- =========================================================================
 	{
 		Id = "cactusaur",
-		Name = "Кактусозавр",
+		Name = "Cactusaur",
+		NameRu = "Кактусозавр",
 		Rarity = "Rare",
 		Price = 2000,
 		Income = 33,
@@ -113,7 +120,8 @@ Kaiju.List = {
 	},
 	{
 		Id = "bubblegum_goblin",
-		Name = "Гоблин-Бубльгум",
+		Name = "Bubblegum Goblin",
+		NameRu = "Гоблин-Бубльгум",
 		Rarity = "Rare",
 		Price = 5600,
 		Income = 75,
@@ -123,7 +131,8 @@ Kaiju.List = {
 	},
 	{
 		Id = "crabburger",
-		Name = "Крабобургер",
+		Name = "Crabburger",
+		NameRu = "Крабобургер",
 		Rarity = "Rare",
 		Price = 15000,
 		Income = 165,
@@ -133,7 +142,8 @@ Kaiju.List = {
 	},
 	{
 		Id = "pigeon_bomber",
-		Name = "Голубь-Бомбардир",
+		Name = "Pigeon Bomber",
+		NameRu = "Голубь-Бомбардир",
 		Rarity = "Rare",
 		Price = 34000,
 		Income = 320,
@@ -143,7 +153,8 @@ Kaiju.List = {
 	},
 	{
 		Id = "giraffecrane",
-		Name = "Жирафокран",
+		Name = "Giraffe Crane",
+		NameRu = "Жирафокран",
 		Rarity = "Rare",
 		Price = 77000,
 		Income = 640,
@@ -157,7 +168,8 @@ Kaiju.List = {
 	-- =========================================================================
 	{
 		Id = "pelmenisaur",
-		Name = "Пельменозавр",
+		Name = "Dumplingsaur",
+		NameRu = "Пельменозавр",
 		Rarity = "Epic",
 		Price = 312000,
 		Income = 1300,
@@ -167,7 +179,8 @@ Kaiju.List = {
 	},
 	{
 		Id = "slime_shlepa",
-		Name = "Слайм-Шлёпа",
+		Name = "Slime Floppa",
+		NameRu = "Слайм-Шлёпа",
 		Rarity = "Epic",
 		Price = 780000,
 		Income = 2600,
@@ -177,7 +190,8 @@ Kaiju.List = {
 	},
 	{
 		Id = "boxer_crab",
-		Name = "Краб-Боксёр",
+		Name = "Boxer Crab",
+		NameRu = "Краб-Боксёр",
 		Rarity = "Epic",
 		Price = 2050000,
 		Income = 5400,
@@ -187,7 +201,8 @@ Kaiju.List = {
 	},
 	{
 		Id = "interceptor_seagull",
-		Name = "Чайка-Перехватчик",
+		Name = "Interceptor Seagull",
+		NameRu = "Чайка-Перехватчик",
 		Rarity = "Epic",
 		Price = 5000000,
 		Income = 10500,
@@ -197,7 +212,8 @@ Kaiju.List = {
 	},
 	{
 		Id = "bananosaur",
-		Name = "Бананозавр",
+		Name = "Bananasaur",
+		NameRu = "Бананозавр",
 		Rarity = "Epic",
 		Price = 11400000,
 		Income = 19000,
@@ -211,7 +227,8 @@ Kaiju.List = {
 	-- =========================================================================
 	{
 		Id = "catzilla",
-		Name = "Котзилла",
+		Name = "Catzilla",
+		NameRu = "Котзилла",
 		Rarity = "Legendary",
 		Price = 41000000,
 		Income = 34500,
@@ -221,7 +238,8 @@ Kaiju.List = {
 	},
 	{
 		Id = "avocado_monster",
-		Name = "Авокадо-Монстр",
+		Name = "Avocado Monster",
+		NameRu = "Авокадо-Монстр",
 		Rarity = "Legendary",
 		Price = 90000000,
 		Income = 60000,
@@ -231,7 +249,8 @@ Kaiju.List = {
 	},
 	{
 		Id = "king_crab",
-		Name = "Кинг-Краб",
+		Name = "King Crab",
+		NameRu = "Кинг-Краб",
 		Rarity = "Legendary",
 		Price = 173000000,
 		Income = 96000,
@@ -241,7 +260,8 @@ Kaiju.List = {
 	},
 	{
 		Id = "grill_phoenix",
-		Name = "Гриль-Феникс",
+		Name = "Grill Phoenix",
+		NameRu = "Гриль-Феникс",
 		Rarity = "Legendary",
 		Price = 336000000,
 		Income = 140000,
@@ -255,7 +275,8 @@ Kaiju.List = {
 	-- =========================================================================
 	{
 		Id = "mecha_godzilych",
-		Name = "Меха-Годзилыч",
+		Name = "Mecha Zillo",
+		NameRu = "Меха-Зиллыч",
 		Rarity = "Mythic",
 		Price = 1440000000,
 		Income = 400000,
@@ -265,7 +286,8 @@ Kaiju.List = {
 	},
 	{
 		Id = "black_hole_blob",
-		Name = "Чёрная Дырочка",
+		Name = "Black Hole Blob",
+		NameRu = "Чёрная Дырочка",
 		Rarity = "Mythic",
 		Price = 3500000000,
 		Income = 700000,
@@ -275,7 +297,8 @@ Kaiju.List = {
 	},
 	{
 		Id = "crab_armageddon",
-		Name = "Краб-Армагеддон",
+		Name = "Crabmageddon",
+		NameRu = "Краб-Армагеддон",
 		Rarity = "Mythic",
 		Price = 6600000000,
 		Income = 1100000,
@@ -285,7 +308,8 @@ Kaiju.List = {
 	},
 	{
 		Id = "shawarmasaur",
-		Name = "Шаурмозавр",
+		Name = "Shawarmasaur",
+		NameRu = "Шаурмозавр",
 		Rarity = "Mythic",
 		Price = 11500000000,
 		Income = 1600000,
@@ -299,7 +323,8 @@ Kaiju.List = {
 	-- =========================================================================
 	{
 		Id = "cosmo_capybara",
-		Name = "Космо-Капибара",
+		Name = "Cosmo Capybara",
+		NameRu = "Космо-Капибара",
 		Rarity = "Secret",
 		Price = 43000000000,
 		Income = 3000000,
@@ -309,7 +334,8 @@ Kaiju.List = {
 	},
 	{
 		Id = "giga_shlepa",
-		Name = "Гига-Шлёпа",
+		Name = "Giga Floppa",
+		NameRu = "Гига-Шлёпа",
 		Rarity = "Secret",
 		Price = 80000000000,
 		Income = 5000000,
@@ -319,7 +345,8 @@ Kaiju.List = {
 	},
 	{
 		Id = "baton_dragon",
-		Name = "Дракон-Батон",
+		Name = "Baguette Dragon",
+		NameRu = "Дракон-Батон",
 		Rarity = "Secret",
 		Price = 130000000000,
 		Income = 8000000,
@@ -329,7 +356,8 @@ Kaiju.List = {
 	},
 	{
 		Id = "cyber_titan_rex",
-		Name = "Кибер-Титан",
+		Name = "Cyber Titan",
+		NameRu = "Кибер-Титан",
 		Rarity = "Secret",
 		Price = 216000000000,
 		Income = 12000000,
