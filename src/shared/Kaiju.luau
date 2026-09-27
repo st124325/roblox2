@@ -384,6 +384,16 @@ function Kaiju.roll(rng: Random?): KaijuDef
 	return Kaiju.List[1]
 end
 
+-- What the owner gets for selling: bigger kaiju are worth more (Titan sells for 3x its price).
+function Kaiju.sellValue(entry: SlotEntry): number
+	local def = entry and byId[entry.Id]
+	if not def then
+		return 0
+	end
+	local _, stage = Config.stageFor(entry.Growth or 0)
+	return math.floor(def.Price * Config.SellRefund * (stage.Income or 1))
+end
+
 function Kaiju.incomeOf(entry: SlotEntry, rebirths: number?): number
 	if not entry or not entry.Id then
 		return 0

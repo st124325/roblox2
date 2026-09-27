@@ -235,7 +235,7 @@ local function placeModelOnPad(player: Player, slot: number, entry: SlotEntry): 
 	-- Add ProximityPrompt "Sell" for the owner
 	local sellPrompt = Instance.new("ProximityPrompt")
 	sellPrompt.Name = "SellPrompt"
-	sellPrompt.ActionText = "Sell"
+	sellPrompt.ActionText = "Sell " .. Format.money(Kaiju.sellValue(entry))
 	sellPrompt.ObjectText = def.Name
 	sellPrompt.HoldDuration = 0.5
 	sellPrompt.MaxActivationDistance = 10
@@ -272,7 +272,7 @@ local function placeModelOnPad(player: Player, slot: number, entry: SlotEntry): 
 			return
 		end
 
-		local refund = math.floor(currentDef.Price * Config.SellRefund)
+		local refund = Kaiju.sellValue(currentEntry)
 		Bases.removeKaiju(player, slot)
 		Data.addMoney(player, refund)
 		Net.event("Cash"):FireClient(player, refund, pad.Position + Vector3.new(0, 3, 0))
@@ -466,7 +466,12 @@ local function assignBase(player: Player)
 					profile.Bank += earned
 					notify(player, "good", "Welcome back! Offline earnings: " .. Format.money(earned))
 				end
+				-- Kaiju kept growing while the owner was away
+				for _, entry in profile.Slots do
+					entry.Growth += offlineSeconds * Config.OfflineGrowthRate
+				end
 			end
+			profile.LastOnline = now
 
 			-- Place saved kaiju on pads
 			for slot, entry in profile.Slots do
@@ -825,6 +830,7 @@ local function onHeartbeat(dt: number)
 					tickIncome += Kaiju.incomeOf(entry, profile.Rebirths)
 				end
 
+				profile.LastOnline = os.time()
 				if tickIncome > 0 then
 					profile.Bank += tickIncome * INCOME_TICK
 					updateBankDisplay(base, profile.Bank)

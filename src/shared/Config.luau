@@ -13,7 +13,8 @@ local Config = {
 	IncomeTick = 1, -- seconds between income payouts into the base bank
 	OfflineRate = 0.25, -- share of income earned while away
 	OfflineCapSeconds = 8 * 3600,
-	SellRefund = 0.5, -- share of the kaiju's price returned when sold
+	OfflineGrowthRate = 0.5, -- kaiju keep growing at half speed while the owner is away
+	SellRefund = 0.5, -- share of the price returned when sold, times the stage's income multiplier
 
 	-- Rebirth: cost of rebirth n (0-based) is RebirthBaseCost * RebirthCostGrowth^n
 	RebirthBaseCost = 200_000_000, -- ~1 h of play (see docs/BALANCE.md)
@@ -41,6 +42,11 @@ local Config = {
 	BonkRange = 9,
 	BonkStunSeconds = 1.6,
 	HomeCooldown = 8,
+	-- Anti-cheat: a carrier moving faster than expected * SpeedTolerance + SpeedSlack studs/s
+	-- earns a strike; SpeedStrikes strikes send the kaiju home
+	SpeedTolerance = 1.5,
+	SpeedSlack = 6,
+	SpeedStrikes = 3,
 
 	-- Growth stages: seconds on a base to reach the stage, income multiplier, carry speed factor
 	Stages = {

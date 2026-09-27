@@ -232,7 +232,7 @@ local function serializeProfile(profile: Profile): StoredProfileData
 		Rebirths = if typeof(profile.Rebirths) == "number" then math.max(0, profile.Rebirths) else 0,
 		Slots = storedSlots,
 		Bank = if typeof(profile.Bank) == "number" then math.max(0, profile.Bank) else 0,
-		LastOnline = os.time(),
+		LastOnline = if typeof(profile.LastOnline) == "number" then profile.LastOnline else os.time(), -- Bases keeps it fresh while the player owns a base
 		Stats = {
 			Bought = bought,
 			Stolen = stolen,

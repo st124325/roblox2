@@ -2,6 +2,7 @@
 -- delivering to the thief's base, Bonk bat tool, stun, timeout, death/leave returns.
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
@@ -31,6 +32,9 @@ type CarryState = {
 	originalSpeed: number,    -- thief's normal WalkSpeed before carrying
 	zoneConn: RBXScriptConnection?, -- touch listener for delivery
 	fullWarnAt: number?,      -- last "no free slots" warning
+	lastPos: Vector3?,        -- anti-cheat: last sampled root position
+	lastSample: number?,      -- anti-cheat: os.clock() of lastPos
+	strikes: number,          -- anti-cheat: too-fast samples so far
 }
 
 -- ── state ─────────────────────────────────────────────────────────────────────
@@ -339,6 +343,7 @@ local function onStealTriggered(prompt: ProximityPrompt, player: Player)
 		startTime = os.clock(),
 		originalSpeed = originalSpeed,
 		zoneConn = nil,
+		strikes = 0,
 	}
 
 	carrying[player] = state
@@ -633,6 +638,61 @@ end
 
 -- ── public API ────────────────────────────────────────────────────────────────
 
+local function isInsideOwnZone(thief: Player): boolean
+	local base = Bases.baseOf(thief)
+	local _, hrp, _ = getCharacter(thief)
+	if not base or not base.Zone or not hrp then
+		return false
+	end
+	local offset = base.Zone.CFrame:PointToObjectSpace((hrp :: BasePart).Position)
+	local half = base.Zone.Size / 2
+	return math.abs(offset.X) <= half.X and math.abs(offset.Y) <= half.Y and math.abs(offset.Z) <= half.Z
+end
+
+-- Touched misses a thief who stands still inside their base (e.g. after selling to make
+-- room), and exploiters can ignore the carry slowdown, so carriers are also checked here.
+local SAMPLE_SECONDS = 0.25
+local sampleAccumulator = 0
+
+local function checkCarriers(dt: number)
+	sampleAccumulator += dt
+	if sampleAccumulator < SAMPLE_SECONDS then
+		return
+	end
+	sampleAccumulator = 0
+	local now = os.clock()
+	for thief, state in carrying do
+		local _, hrp, _ = getCharacter(thief)
+		if not hrp then
+			continue
+		end
+		local pos = (hrp :: BasePart).Position
+
+		-- Horizontal speed since the last sample (falling doesn't count)
+		if state.lastPos and state.lastSample then
+			local elapsed = now - state.lastSample
+			local flat = Vector3.new(pos.X - state.lastPos.X, 0, pos.Z - state.lastPos.Z)
+			local _, stage = Config.stageFor(state.entry.Growth)
+			local expected = Config.WalkSpeed * (stage.Carry or 1)
+			if elapsed > 0 and flat.Magnitude / elapsed > expected * Config.SpeedTolerance + Config.SpeedSlack then
+				state.strikes += 1
+				if state.strikes >= Config.SpeedStrikes then
+					warn("[Carry] " .. thief.Name .. " moved too fast while carrying; kaiju returned")
+					Net.event("Notify"):FireClient(thief, "bad", "Too fast! The kaiju ran back home.")
+					returnKaiju(state)
+					continue
+				end
+			end
+		end
+		state.lastPos = pos
+		state.lastSample = now
+
+		if isInsideOwnZone(thief) then
+			deliverKaiju(state)
+		end
+	end
+end
+
 function Carry.isCarrying(player: Player): boolean
 	return carrying[player] ~= nil
 end
@@ -641,6 +701,8 @@ function Carry.init()
 	carryFolder = Instance.new("Folder")
 	carryFolder.Name = "CarriedKaiju"
 	carryFolder.Parent = Workspace
+
+	RunService.Heartbeat:Connect(checkCarriers)
 
 	-- Subscribe to Bases.kaijuAdded to attach steal prompts
 	Bases.kaijuAdded.Event:Connect(function(player: Player, slot: number, model: Model)
