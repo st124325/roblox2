@@ -69,6 +69,16 @@ function Products.padCost(alreadyBought: number): number
 	return Products.PadBaseCost * Products.PadCostGrowth ^ alreadyBought
 end
 
+-- Rewarded video ads (AdService). Each reward is a developer product (Roblox recommends
+-- rewards worth 3-10 Robux); ads only run once the game has 2,000+ monthly visitors.
+export type AdReward = { Id: number, Name: string, Desc: string, Icon: string, Seconds: number?, Min: number? }
+Products.AdRewards = {
+	AdCash = { Id = 0, Name = "Free Cash", Desc = "10 min of your income", Icon = "💵", Seconds = 600, Min = 500 },
+	AdShield = { Id = 0, Name = "Free Shield 5 min", Desc = "Nobody can enter your base", Icon = "🛡️" },
+	AdDoubleOffline = { Id = 0, Name = "Double Offline Cash", Desc = "Get your offline earnings again", Icon = "🌙" },
+} :: { [string]: AdReward }
+Products.AdCooldownSeconds = 180 -- per player, per reward
+
 Products.StarterWindowSeconds = 24 * 3600
 Products.CashRainSeconds = 300
 Products.ShieldOfferCooldown = 300 -- after being robbed, offer a Shield at most this often

@@ -1,5 +1,6 @@
 -- Robux shop UI: SHOP button, a panel with Boosts / Passes / Gift tabs, the Starter Pack
 -- button with its countdown, contextual offer popups and the server-wide announcement banner.
+local AdService = game:GetService("AdService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -11,6 +12,7 @@ local Format = require(Shared:WaitForChild("Format"))
 local Net = require(Shared:WaitForChild("Net"))
 local Products = require(Shared:WaitForChild("Products"))
 local Sounds = require(Shared:WaitForChild("Sounds"))
+local Toasts = require(script.Parent:WaitForChild("Toasts"))
 
 local ShopUi = {}
 
@@ -33,6 +35,26 @@ local list: ScrollingFrame
 local tabButtons: { [string]: TextButton } = {}
 local currentTab = "Boosts"
 local giftPass: string? = nil
+local adAvailable = false
+local IS_STUDIO = RunService:IsStudio()
+
+-- Ask Roblox whether a rewarded video can play right now (Studio pretends yes for testing).
+local function refreshAdAvailability(): boolean
+	if IS_STUDIO then
+		adAvailable = true
+		return true
+	end
+	local ok, result = pcall(function()
+		return AdService:GetAdAvailabilityNowAsync(Enum.AdFormat.RewardedVideo)
+	end)
+	adAvailable = ok and result ~= nil and result.AdAvailabilityResult == Enum.AdAvailabilityResult.IsAvailable
+	return adAvailable
+end
+
+local function watchAd(key: string)
+	Sounds.play("Click")
+	Net.event("WatchAd"):FireServer(key)
+end
 
 local function corner(parent: Instance, radius: number)
 	local c = Instance.new("UICorner")
@@ -151,6 +173,12 @@ local function render()
 	if currentTab == "Boosts" then
 		local income = player:GetAttribute("Income")
 		income = if type(income) == "number" then income else 0
+		if adAvailable then
+			local reward = Products.AdRewards.AdCash
+			card(-1, reward.Icon, reward.Name, "+" .. Format.money(Products.cashFor(reward :: any, income)) .. " for a short video", "📺 Watch", Color3.fromRGB(80, 120, 230), function()
+				watchAd("AdCash")
+			end)
+		end
 		for i, key in sortedKeys(Products.Items) do
 			local item = Products.Items[key]
 			local starterOpen = key ~= "StarterPack" or player:GetAttribute("StarterEnds") ~= nil
@@ -216,6 +244,12 @@ local function openShop(tab: string?)
 	end
 	giftPass = nil
 	render()
+	task.spawn(function()
+		local before = adAvailable
+		if refreshAdAvailability() ~= before and panel.Visible then
+			render()
+		end
+	end)
 	panel.Visible = true
 	panel.Size = UDim2.new(0.85, 0, 0.72, 0)
 	TweenService:Create(panel, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
@@ -343,10 +377,13 @@ end
 
 -- Contextual offer: a small card that slides up from the bottom.
 local function showOffer(key: string, reason: string)
-	local item = Products.Items[key]
-	if not item then
+	local ad = Products.AdRewards[key]
+	local item = Products.Items[key] or ad
+	if not item or (ad and not refreshAdAvailability()) then
 		return
 	end
+	-- A paid Shield offer also gets a free 5-minute one for watching a video
+	local freeAlternative = if key == "Shield10" and refreshAdAvailability() then "AdShield" else nil
 	local old = gui:FindFirstChild("OfferCard")
 	if old then
 		old:Destroy()
@@ -365,17 +402,32 @@ local function showOffer(key: string, reason: string)
 	limit.MaxSize = Vector2.new(460, 96)
 	limit.Parent = offer
 
-	label(offer, reason, UDim2.new(1, -150, 0, 26), UDim2.new(0, 14, 0, 10), Enum.Font.GothamBold, 16, COLORS.Sub)
-	label(offer, item.Icon .. " " .. item.Name, UDim2.new(1, -150, 0, 34), UDim2.new(0, 14, 0, 40), Enum.Font.FredokaOne, 26)
+	local textWidth = if freeAlternative then -240 else -150 -- leave room for the buttons
+	label(offer, reason, UDim2.new(1, textWidth, 0, 26), UDim2.new(0, 14, 0, 10), Enum.Font.GothamBold, 16, COLORS.Sub)
+	label(offer, item.Icon .. " " .. item.Name, UDim2.new(1, textWidth, 0, 34), UDim2.new(0, 14, 0, 40), Enum.Font.FredokaOne, 26)
 
-	local b = button(offer, "R$ " .. item.Price, COLORS.Robux)
+	local b = button(offer, if ad then "📺 Watch" else "R$ " .. (item :: any).Price, if ad then Color3.fromRGB(80, 120, 230) else COLORS.Robux)
 	b.AnchorPoint = Vector2.new(1, 0.5)
 	b.Position = UDim2.new(1, -52, 0.5, 0)
 	b.Size = UDim2.new(0, 90, 0, 48)
 	b.Activated:Connect(function()
-		buy("Item", key)
+		if ad then
+			watchAd(key)
+		else
+			buy("Item", key)
+		end
 		offer:Destroy()
 	end)
+	if freeAlternative then
+		local free = button(offer, "📺 Free", Color3.fromRGB(80, 120, 230))
+		free.AnchorPoint = Vector2.new(1, 0.5)
+		free.Position = UDim2.new(1, -148, 0.5, 0)
+		free.Size = UDim2.new(0, 86, 0, 48)
+		free.Activated:Connect(function()
+			watchAd(freeAlternative)
+			offer:Destroy()
+		end)
+	end
 	local close = button(offer, "✕", COLORS.CardHi)
 	close.AnchorPoint = Vector2.new(1, 0.5)
 	close.Position = UDim2.new(1, -10, 0.5, 0)
@@ -440,7 +492,12 @@ function ShopUi.init(screenGui: ScreenGui)
 
 	Net.event("Offer").OnClientEvent:Connect(function(key: any, reason: any)
 		if type(key) == "string" then
-			showOffer(key, tostring(reason or ""))
+			task.spawn(showOffer, key, tostring(reason or "")) -- ad availability check yields
+		end
+	end)
+	Net.event("AdResult").OnClientEvent:Connect(function(_key: any, ok: any, message: any)
+		if not ok and type(message) == "string" and message ~= "" then
+			Toasts.show("info", message)
 		end
 	end)
 

@@ -12,6 +12,8 @@ local EVENTS = {
 	"Gift", -- C->S  passKey, targetUserId
 	"Offer", -- S->C  itemKey, reasonText (contextual purchase suggestion)
 	"Announce", -- S->C  text (server-wide banner, e.g. a Cash Rain)
+	"WatchAd", -- C->S  adRewardKey
+	"AdResult", -- S->C  adRewardKey, ok, message
 }
 local FUNCTIONS = {}
 

@@ -13,6 +13,7 @@ local Events = {
 	Robbed = signal(), -- (victim, thief, kaijuId) someone grabbed the victim's kaiju
 	StageUp = signal(), -- (player, slot, stageName)
 	Rebirthed = signal(), -- (player, rebirths)
+	OfflineEarned = signal(), -- (player, amount) paid into the bank on join
 }
 
 return Events

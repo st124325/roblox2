@@ -5,6 +5,7 @@
 -- the profile is saved before Roblox is told the purchase was granted.
 -- Items whose id is still 0 are granted for free in Studio so everything can be tested before
 -- the products exist; in a live game they show as unavailable.
+local AdService = game:GetService("AdService")
 local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -42,6 +43,8 @@ local ownedPasses: { [Player]: { [string]: boolean } } = {}
 local pendingGift: { [Player]: { Pass: string, Target: number } } = {}
 local lastShieldOffer: { [Player]: number } = {}
 local cashRainEnds = 0 -- os.clock()
+local adCooldowns: { [Player]: { [string]: number } } = {}
+local offlinePending: { [Player]: number } = {} -- offline earnings the player may double with an ad
 
 local function notify(player: Player, kind: string, text: string)
 	notifyEvent:FireClient(player, kind, text)
@@ -196,6 +199,28 @@ local function grantItem(player: Player, key: string)
 	end
 end
 
+local function grantAdReward(player: Player, key: string)
+	local reward = Products.AdRewards[key]
+	if not reward then
+		return
+	end
+	if key == "AdCash" then
+		local amount = Products.cashFor(reward :: any, currentIncome(player))
+		grantCash(player, amount)
+		notify(player, "good", "📺 Thanks for watching! +" .. Format.money(amount))
+	elseif key == "AdShield" then
+		Bases.lockFor(player, 300)
+		notify(player, "good", "📺 Shield up for " .. Format.time(Bases.lockRemaining(player)))
+	elseif key == "AdDoubleOffline" then
+		local amount = offlinePending[player] or 0
+		offlinePending[player] = nil
+		if amount > 0 then
+			grantCash(player, amount)
+			notify(player, "good", "📺 Offline cash doubled! +" .. Format.money(amount))
+		end
+	end
+end
+
 local function grantGift(buyer: Player, passKey: string)
 	local gift = pendingGift[buyer]
 	pendingGift[buyer] = nil
@@ -238,6 +263,8 @@ local function processReceipt(info): Enum.ProductPurchaseDecision
 
 	if product.Kind == "Gift" then
 		grantGift(player, product.Key)
+	elseif product.Kind == "Ad" then
+		grantAdReward(player, product.Key)
 	else
 		grantItem(player, product.Key)
 	end
@@ -328,6 +355,47 @@ local function onGift(player: Player, passKey: any, targetUserId: any)
 	end
 end
 
+-- Rewarded video: the server shows the ad; Roblox calls ProcessReceipt once it was watched in full.
+local function onWatchAd(player: Player, key: any)
+	local reward = type(key) == "string" and Products.AdRewards[key]
+	if not reward then
+		return
+	end
+	local cooldowns = adCooldowns[player] or {}
+	adCooldowns[player] = cooldowns
+	local now = os.clock()
+	if cooldowns[key] and now < cooldowns[key] then
+		Net.event("AdResult"):FireClient(player, key, false, "Next free reward in " .. Format.time(cooldowns[key] - now))
+		return
+	end
+	if key == "AdDoubleOffline" and not offlinePending[player] then
+		return
+	end
+
+	if reward.Id == 0 then
+		if IS_STUDIO then
+			cooldowns[key] = now + Products.AdCooldownSeconds
+			grantAdReward(player, key)
+			Net.event("AdResult"):FireClient(player, key, true, "[Studio test] ad skipped")
+		else
+			Net.event("AdResult"):FireClient(player, key, false, "Ads are coming soon!")
+		end
+		return
+	end
+
+	local ok, result = pcall(function()
+		local adReward = AdService:CreateAdRewardFromDevProductId(reward.Id)
+		return AdService:ShowRewardedVideoAdAsync(player, adReward)
+	end)
+	local watched = ok and result == Enum.ShowAdResult.ShowCompleted
+	if watched then
+		cooldowns[key] = os.clock() + Products.AdCooldownSeconds
+	elseif not ok then
+		warn("[Shop] rewarded ad failed: " .. tostring(result))
+	end
+	Net.event("AdResult"):FireClient(player, key, watched, if watched then "" else "No ad right now, try later")
+end
+
 -- Pads: the next locked one can be opened with cash (price grows fast) or Robux.
 local function padCostFor(player: Player): number
 	local m = meta(player)
@@ -391,6 +459,11 @@ function Shop.init()
 			passById[pass.Id] = key
 		end
 	end
+	for key, reward in Products.AdRewards do
+		if reward.Id ~= 0 then
+			productById[reward.Id] = { Kind = "Ad", Key = key }
+		end
+	end
 
 	-- Hooks into Bases
 	function Bases.multiplierFor(player: Player): number
@@ -433,6 +506,17 @@ function Shop.init()
 
 	Net.event("Buy").OnServerEvent:Connect(onBuy)
 	Net.event("Gift").OnServerEvent:Connect(onGift)
+	Net.event("WatchAd").OnServerEvent:Connect(onWatchAd)
+
+	-- Welcome back: offer to double the offline earnings with an ad
+	Events.OfflineEarned.Event:Connect(function(player: Player, amount: number)
+		offlinePending[player] = amount
+		task.delay(3, function()
+			if player.Parent == Players and offlinePending[player] then
+				offerEvent:FireClient(player, "AdDoubleOffline", "You earned " .. Format.money(amount) .. " while away — double it:")
+			end
+		end)
+	end)
 
 	Data.loaded.Event:Connect(function(player: Player)
 		-- Bases assigns the base on the same signal; pads need it for the unlock prompt
@@ -455,6 +539,8 @@ function Shop.init()
 		ownedPasses[player] = nil
 		pendingGift[player] = nil
 		lastShieldOffer[player] = nil
+		adCooldowns[player] = nil
+		offlinePending[player] = nil
 	end)
 
 	-- Just got robbed: the best moment to offer a Shield

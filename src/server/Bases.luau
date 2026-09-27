@@ -523,6 +523,7 @@ local function assignBase(player: Player)
 				if earned > 0 then
 					profile.Bank += earned
 					notify(player, "good", "Welcome back! Offline earnings: " .. Format.money(earned))
+					Events.OfflineEarned:Fire(player, earned)
 				end
 				-- Kaiju kept growing while the owner was away
 				for _, entry in profile.Slots do
