@@ -674,7 +674,7 @@ end
 function Hud.setIncome(amount: number)
 	currentIncome = amount
 	if incomeLabel then
-		incomeLabel.Text = "+" .. Format.money(amount) .. "/s"
+		incomeLabel.Text = "+" .. Format.rate(amount)
 	end
 end
 

@@ -620,7 +620,7 @@ local function createTag(
 	incomeLabel.Size = UDim2.new(1, -8, 0, 16)
 	incomeLabel.BackgroundTransparency = 1
 	incomeLabel.Font = Enum.Font.GothamBold
-	incomeLabel.Text = Format.money(def.Income) .. "/s"
+	incomeLabel.Text = Format.rate(def.Income)
 	incomeLabel.TextColor3 = Color3.fromRGB(100, 255, 120)
 	incomeLabel.TextSize = 12
 	incomeLabel.Parent = card

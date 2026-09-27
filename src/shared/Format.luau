@@ -23,6 +23,15 @@ function Format.money(n: number): string
 	return "$" .. Format.short(n)
 end
 
+-- Income per second: keeps cents for small fractional rates ($0.75/s), else like money.
+function Format.rate(n: number): string
+	if n > 0 and n < 100 and n ~= math.floor(n) then
+		local text = string.format("%.2f", n):gsub("0+$", ""):gsub("%.$", "")
+		return "$" .. text .. "/s"
+	end
+	return Format.money(n) .. "/s"
+end
+
 function Format.time(seconds: number): string
 	seconds = math.max(0, math.floor(seconds))
 	if seconds >= 3600 then

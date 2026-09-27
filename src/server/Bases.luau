@@ -205,7 +205,7 @@ local function placeModelOnPad(player: Player, slot: number, entry: SlotEntry): 
 	end
 
 	-- Update Tag info
-	local incomeText = Format.money(Kaiju.incomeOf(entry, (Data.get(player) :: any).Rebirths)) .. "/s"
+	local incomeText = Format.rate(Kaiju.incomeOf(entry, (Data.get(player) :: any).Rebirths))
 	local stageText = "Stage " .. stage.Name
 	KaijuModel.setInfo(model, incomeText, stageText)
 
@@ -786,7 +786,7 @@ local function onHeartbeat(dt: number)
 							local incomeVal = Kaiju.incomeOf(entry, profile.Rebirths)
 							KaijuModel.setInfo(
 								model,
-								Format.money(incomeVal) .. "/s",
+								Format.rate(incomeVal),
 								"Stage " .. newStage.Name
 							)
 						end
