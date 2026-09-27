@@ -10,6 +10,11 @@ type KaijuDef = Kaiju.KaijuDef
 
 local KaijuModel = {}
 
+local meshTemplates: { [string]: BasePart } = {} -- kaiju id -> loaded MeshPart template
+local MESH_MAX_WIDTH = 4.6 -- studs at scale 1 (pads are 7.6 wide, 13 apart)
+local MESH_YAW = math.pi -- the FBX export faces +Z; Roblox models face -Z
+local RETRY_SECONDS = 60
+
 -- Normalize mutation string to standard capitalized English name
 local function normalizeMutation(mut: string?): string?
 	if not mut or mut == "" then
@@ -651,6 +656,55 @@ end
 -- PrimaryPart "Root" (Anchored=false, CanCollide=false, Massless), all parts welded to Root.
 -- Bottom of the model is exactly at Root.Position.Y - Root.Size.Y / 2.
 -- BillboardGui "Tag" over head: Name, Rarity, Income, Stage.
+-- Server only: load every kaiju mesh from its Roblox asset (see KaijuAssets / tools/models).
+-- Until a mesh loads (e.g. still in moderation) that kaiju keeps its part-built look; missing
+-- ones are retried every RETRY_SECONDS.
+function KaijuModel.preload()
+	local InsertService = game:GetService("InsertService")
+	local ok, assets = pcall(require, script.Parent:WaitForChild("KaijuAssets"))
+	if not ok then
+		return
+	end
+	local function loadOne(kaijuId: string, assetId: number): boolean
+		local loaded, container = pcall(InsertService.LoadAsset, InsertService, assetId)
+		if not loaded then
+			return false
+		end
+		local part: BasePart? = nil
+		for _, d in (container :: Instance):GetDescendants() do
+			if d:IsA("MeshPart") then
+				part = d
+				break
+			end
+		end
+		if part then
+			part.Parent = nil
+			meshTemplates[kaijuId] = part
+		end
+		(container :: Instance):Destroy()
+		return part ~= nil
+	end
+	task.spawn(function()
+		while true do
+			local missing = 0
+			for kaijuId, assetId in assets do
+				if not meshTemplates[kaijuId] and not loadOne(kaijuId, assetId) then
+					missing += 1
+				end
+			end
+			if missing == 0 then
+				return
+			end
+			warn(string.format("[KaijuModel] %d meshes not loaded yet, retrying in %ds", missing, RETRY_SECONDS))
+			task.wait(RETRY_SECONDS)
+		end
+	end)
+end
+
+function KaijuModel.hasMesh(kaijuId: string): boolean
+	return meshTemplates[kaijuId] ~= nil
+end
+
 function KaijuModel.build(def: KaijuDef, scale: number, mutation: string?): Model
 	scale = math.max(0.2, scale or 1)
 	local normMutation = normalizeMutation(mutation)
@@ -680,6 +734,19 @@ function KaijuModel.build(def: KaijuDef, scale: number, mutation: string?): Mode
 	local totalHeight = baseHeight * scale
 	local totalDepth = baseDepth * scale
 
+	-- Real mesh (Quaternius monster) when its template has loaded: size it to the shape's
+	-- height, but never wider than MESH_MAX_WIDTH per scale so neighbours on the pads don't overlap
+	local mesh: BasePart? = nil
+	local template = meshTemplates[def.Id]
+	if template then
+		local size = template.Size
+		local fit = math.min(totalHeight / size.Y, (MESH_MAX_WIDTH * scale) / math.max(size.X, size.Z))
+		local clone = template:Clone()
+		clone.Size = size * fit
+		totalWidth, totalHeight, totalDepth = clone.Size.X, clone.Size.Y, clone.Size.Z
+		mesh = clone
+	end
+
 	-- PrimaryPart "Root": centered at Y = totalHeight / 2 so that
 	-- Root.Position.Y - Root.Size.Y / 2 == 0, exactly aligning with the model's bottom.
 	local root = Instance.new("Part")
@@ -695,8 +762,21 @@ function KaijuModel.build(def: KaijuDef, scale: number, mutation: string?): Mode
 	root.Parent = model
 	model.PrimaryPart = root
 
-	-- Build parts based on Shape
-	if shapeName == "dino" then
+	-- Build parts based on Shape (or drop in the real mesh)
+	if mesh then
+		mesh.Name = "Mesh"
+		mesh.Anchored = false
+		mesh.CanCollide = false
+		mesh.CanQuery = false
+		mesh.CanTouch = false
+		mesh.Massless = true
+		mesh.CFrame = root.CFrame * CFrame.Angles(0, MESH_YAW, 0)
+		mesh.Parent = model
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0 = root
+		weld.Part1 = mesh
+		weld.Parent = mesh
+	elseif shapeName == "dino" then
 		buildDino(model, root, def, scale, normMutation)
 	elseif shapeName == "blob" then
 		buildBlob(model, root, def, scale, normMutation)

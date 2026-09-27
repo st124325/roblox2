@@ -13,6 +13,7 @@ local Feedback = require(Server.Feedback)
 local Shop = require(Server.Shop)
 
 Localization.init()
+require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("KaijuModel")).preload()
 Map.build()
 Bases.init()
 Carry.init()
