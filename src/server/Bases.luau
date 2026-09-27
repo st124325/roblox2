@@ -325,9 +325,10 @@ function Bases.addKaiju(player: Player, entry: SlotEntry): number?
 		return nil
 	end
 	local maxSlots = Bases.unlockedSlots(player)
-	-- Find first free unlocked slot
+	-- Find first free unlocked slot (slots whose kaiju is being carried by a thief stay reserved)
+	local reserved = profile.Reserved or {}
 	for i = 1, maxSlots do
-		if not profile.Slots[i] then
+		if not profile.Slots[i] and not reserved[i] then
 			profile.Slots[i] = entry
 			placeModelOnPad(player, i, entry)
 			refreshIncomeAttribute(player)
@@ -350,6 +351,55 @@ function Bases.removeKaiju(player: Player, slot: number): SlotEntry?
 	removeModelFromPad(player, slot)
 	refreshIncomeAttribute(player)
 	return entry
+end
+
+-- Stealing keeps the victim's slot reserved while the kaiju is carried, so it is still
+-- saved with the victim's profile and can always go back to the same pad.
+function Bases.takeForSteal(owner: Player, slot: number): SlotEntry?
+	local profile = Data.get(owner)
+	local entry = Bases.removeKaiju(owner, slot)
+	if profile and entry then
+		profile.Reserved = profile.Reserved or {}
+		profile.Reserved[slot] = entry
+	end
+	return entry
+end
+
+-- Put a stolen kaiju back on its pad. False if the reservation is gone (owner left or rebirthed).
+function Bases.returnStolen(owner: Player, slot: number, entry: SlotEntry): boolean
+	local profile = Data.get(owner)
+	if not profile or not profile.Reserved or profile.Reserved[slot] ~= entry then
+		return false
+	end
+	profile.Reserved[slot] = nil
+	profile.Slots[slot] = entry
+	placeModelOnPad(owner, slot, entry)
+	refreshIncomeAttribute(owner)
+	return true
+end
+
+-- The thief got it home: the victim loses the kaiju for good. False if the reservation is gone.
+function Bases.releaseStolen(owner: Player, slot: number, entry: SlotEntry): boolean
+	local profile = Data.get(owner)
+	if not profile or not profile.Reserved or profile.Reserved[slot] ~= entry then
+		return false
+	end
+	profile.Reserved[slot] = nil
+	return true
+end
+
+function Bases.hasFreeSlot(player: Player): boolean
+	local profile = Data.get(player)
+	if not profile then
+		return false
+	end
+	local reserved = profile.Reserved or {}
+	for i = 1, Bases.unlockedSlots(player) do
+		if not profile.Slots[i] and not reserved[i] then
+			return true
+		end
+	end
+	return false
 end
 
 function Bases.slotModel(player: Player, slot: number): Model?
@@ -626,9 +676,12 @@ local function setupRemotes()
 			return
 		end
 
-		-- Perform rebirth: deduct money, clear slots, increment rebirths
-		Data.setMoney(player, 0)
+		-- Perform rebirth: reset money to the starting amount (not 0, or the player could
+		-- never afford a kaiju again), clear slots, increment rebirths
+		Data.setMoney(player, Config.StartMoney)
 		profile.Bank = 0
+		-- Kaiju being carried off by thieves are wiped too; their delivery is cancelled
+		profile.Reserved = {}
 
 		-- Remove all kaiju models
 		local baseIdx = baseByPlayer[player]

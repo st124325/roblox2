@@ -23,12 +23,14 @@ local Carry = {}
 type CarryState = {
 	thief: Player,
 	owner: Player,            -- the victim (who got stolen from)
+	slot: number,             -- victim's pad, reserved until the carry ends
 	entry: any,               -- SlotEntry: { Id, Growth, Mutation? }
 	model: Model,             -- visual model welded above thief's head
 	weld: WeldConstraint,     -- attaches model to HumanoidRootPart
 	startTime: number,        -- os.clock() when steal happened
 	originalSpeed: number,    -- thief's normal WalkSpeed before carrying
 	zoneConn: RBXScriptConnection?, -- touch listener for delivery
+	fullWarnAt: number?,      -- last "no free slots" warning
 }
 
 -- ── state ─────────────────────────────────────────────────────────────────────
@@ -58,7 +60,8 @@ end
 
 -- ── return stolen kaiju to its owner ──────────────────────────────────────────
 
-local function returnKaiju(state: CarryState)
+-- Drop the carried model and restore the thief; does not decide where the kaiju goes.
+local function endCarry(state: CarryState)
 	-- Cleanup visual model
 	if state.model and state.model.Parent then
 		state.model:Destroy()
@@ -78,70 +81,53 @@ local function returnKaiju(state: CarryState)
 
 	carrying[state.thief] = nil
 	state.thief:SetAttribute("Carrying", nil)
+end
 
-	-- Try to return kaiju to owner
+local function returnKaiju(state: CarryState)
+	endCarry(state)
+	-- The victim's pad stayed reserved, so the kaiju always fits back
 	local owner = state.owner
-	if owner and owner:IsDescendantOf(Players) then
-		local slot = Bases.addKaiju(owner, state.entry)
-		if slot then
-			Net.event("Notify"):FireClient(owner, "info", "Your " .. (Kaiju.get(state.entry.Id) or { Name = "Kaiju" }).Name .. " was returned!")
-		end
-		-- If no slot available, the kaiju is lost (owner's base is full)
+	if Bases.returnStolen(owner, state.slot, state.entry) then
+		Net.event("Notify"):FireClient(owner, "info", "Your " .. (Kaiju.get(state.entry.Id) or { Name = "Kaiju" }).Name .. " was returned!")
 	end
-	-- If owner left the game, kaiju is lost (per ARCH.md spec)
 end
 
 -- ── deliver stolen kaiju to thief's base ──────────────────────────────────────
 
 local function deliverKaiju(state: CarryState)
-	-- Cleanup visual model
-	if state.model and state.model.Parent then
-		state.model:Destroy()
-	end
-
-	-- Cleanup zone connection
-	if state.zoneConn then
-		state.zoneConn:Disconnect()
-		state.zoneConn = nil
-	end
-
-	-- Restore thief's WalkSpeed
-	local _, _, hum = getCharacter(state.thief)
-	if hum then
-		(hum :: any).WalkSpeed = state.originalSpeed
-	end
-
-	carrying[state.thief] = nil
-	state.thief:SetAttribute("Carrying", nil)
-
-	-- Add to thief's base (Growth is preserved from the original)
 	local thief = state.thief
-	local slot = Bases.addKaiju(thief, state.entry)
 	local defName = (Kaiju.get(state.entry.Id) or { Name = "Kaiju" }).Name
 
-	if slot then
-		-- Stats tracking
-		local thiefProfile = Data.get(thief)
-		if thiefProfile then
-			thiefProfile.Stats.Stolen += 1
+	-- No free slot: keep carrying, the thief can sell something and come back
+	if not Bases.hasFreeSlot(thief) then
+		local now = os.clock()
+		if not state.fullWarnAt or now - state.fullWarnAt > 3 then
+			state.fullWarnAt = now
+			Net.event("Notify"):FireClient(thief, "bad", "No free slots! Sell a kaiju to make room for " .. defName .. ".")
 		end
-
-		local ownerProfile = Data.get(state.owner)
-		if ownerProfile then
-			ownerProfile.Stats.Lost += 1
-		end
-
-		Net.event("Notify"):FireClient(thief, "good", "Delivered " .. defName .. "!")
-	else
-		-- No free slot: return to owner
-		if state.owner and state.owner:IsDescendantOf(Players) then
-			local returnSlot = Bases.addKaiju(state.owner, state.entry)
-			if returnSlot then
-				Net.event("Notify"):FireClient(state.owner, "info", "Your " .. defName .. " was returned (thief had no room)!")
-			end
-		end
-		Net.event("Notify"):FireClient(thief, "bad", "No free slots! " .. defName .. " returned to owner.")
+		return
 	end
+
+	endCarry(state)
+
+	-- The victim rebirthed or left mid-carry: their save keeps the kaiju, so the thief gets nothing
+	if not Bases.releaseStolen(state.owner, state.slot, state.entry) then
+		Net.event("Notify"):FireClient(thief, "bad", defName .. " slipped away!")
+		return
+	end
+
+	-- Growth is preserved from the original
+	Bases.addKaiju(thief, state.entry)
+
+	local thiefProfile = Data.get(thief)
+	if thiefProfile then
+		thiefProfile.Stats.Stolen += 1
+	end
+	local ownerProfile = Data.get(state.owner)
+	if ownerProfile then
+		ownerProfile.Stats.Lost += 1
+	end
+	Net.event("Notify"):FireClient(thief, "good", "Delivered " .. defName .. "!")
 end
 
 -- ── attach model above thief's head ───────────────────────────────────────────
@@ -322,8 +308,8 @@ local function onStealTriggered(prompt: ProximityPrompt, player: Player)
 		return
 	end
 
-	-- Remove kaiju from base
-	local entry = Bases.removeKaiju(owner, slotNum)
+	-- Remove kaiju from base (its pad stays reserved for the owner)
+	local entry = Bases.takeForSteal(owner, slotNum)
 	if not entry then
 		return
 	end
@@ -336,7 +322,7 @@ local function onStealTriggered(prompt: ProximityPrompt, player: Player)
 	local _, _, hum = getCharacter(player)
 	if not hum then
 		-- Player died between prompt trigger and processing, return kaiju
-		Bases.addKaiju(owner, entry)
+		Bases.returnStolen(owner, slotNum, entry)
 		return
 	end
 
@@ -346,6 +332,7 @@ local function onStealTriggered(prompt: ProximityPrompt, player: Player)
 	local state: CarryState = {
 		thief = player,
 		owner = owner,
+		slot = slotNum,
 		entry = entry,
 		model = nil :: any,
 		weld = nil :: any,
@@ -605,6 +592,14 @@ local function onPlayerRemoving(player: Player)
 	local state = carrying[player]
 	if state then
 		returnKaiju(state)
+	end
+
+	-- The victim left: their save already holds the kaiju, so drop it from the thief's hands
+	for _, other in carrying do
+		if other.owner == player then
+			endCarry(other)
+			Net.event("Notify"):FireClient(other.thief, "bad", "The owner left — the kaiju vanished!")
+		end
 	end
 
 	-- Clear any state

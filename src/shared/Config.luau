@@ -16,8 +16,8 @@ local Config = {
 	SellRefund = 0.5, -- share of the kaiju's price returned when sold
 
 	-- Rebirth: cost of rebirth n (0-based) is RebirthBaseCost * RebirthCostGrowth^n
-	RebirthBaseCost = 1_000_000,
-	RebirthCostGrowth = 8,
+	RebirthBaseCost = 200_000_000, -- ~1 h of play (see docs/BALANCE.md)
+	RebirthCostGrowth = 5,
 	RebirthIncomeBonus = 0.5, -- +50% income per rebirth (additive)
 
 	-- Conveyor

@@ -41,7 +41,8 @@ Kaiju.RarityColor = {
 }
 
 -- Catalog of 27 Kaijus across all 6 rarities and 5 shapes.
--- Payback time (Price / Income) starts at 20-31s for Common and increases with rarity up to ~$58M.
+-- Payback time (Price / Income at stage S): Common 20-31s, Rare 1-2 min, Epic 4-10 min,
+-- Legendary 20-40 min, Mythic 1-2 h, Secret 4-5 h. Simulated: first Legendary ~1 h, first Secret ~8-20 h.
 Kaiju.List = {
 	-- =========================================================================
 	-- COMMON (Price: $15 - $500, Payback: 20s - 31s)
@@ -98,13 +99,13 @@ Kaiju.List = {
 	},
 
 	-- =========================================================================
-	-- RARE (Price: $1,200 - $35,000, Payback: 36s - 55s)
+	-- RARE (Price: $2,000 - $77,000, Payback: 60s - 120s)
 	-- =========================================================================
 	{
 		Id = "cactusaur",
 		Name = "Кактусозавр",
 		Rarity = "Rare",
-		Price = 1200,
+		Price = 2000,
 		Income = 33,
 		Body = Color3.fromRGB(60, 160, 75),
 		Accent = Color3.fromRGB(255, 90, 140),
@@ -114,7 +115,7 @@ Kaiju.List = {
 		Id = "bubblegum_goblin",
 		Name = "Гоблин-Бубльгум",
 		Rarity = "Rare",
-		Price = 3000,
+		Price = 5600,
 		Income = 75,
 		Body = Color3.fromRGB(255, 105, 180),
 		Accent = Color3.fromRGB(100, 240, 255),
@@ -124,7 +125,7 @@ Kaiju.List = {
 		Id = "crabburger",
 		Name = "Крабобургер",
 		Rarity = "Rare",
-		Price = 7500,
+		Price = 15000,
 		Income = 165,
 		Body = Color3.fromRGB(210, 140, 60),
 		Accent = Color3.fromRGB(220, 50, 40),
@@ -134,7 +135,7 @@ Kaiju.List = {
 		Id = "pigeon_bomber",
 		Name = "Голубь-Бомбардир",
 		Rarity = "Rare",
-		Price = 16000,
+		Price = 34000,
 		Income = 320,
 		Body = Color3.fromRGB(130, 140, 155),
 		Accent = Color3.fromRGB(60, 180, 160),
@@ -144,7 +145,7 @@ Kaiju.List = {
 		Id = "giraffecrane",
 		Name = "Жирафокран",
 		Rarity = "Rare",
-		Price = 35000,
+		Price = 77000,
 		Income = 640,
 		Body = Color3.fromRGB(245, 190, 40),
 		Accent = Color3.fromRGB(50, 50, 50),
@@ -152,13 +153,13 @@ Kaiju.List = {
 	},
 
 	-- =========================================================================
-	-- EPIC (Price: $80,000 - $1,800,000, Payback: 61s - 95s)
+	-- EPIC (Price: $312K - $11.4M, Payback: 4 - 10 min)
 	-- =========================================================================
 	{
 		Id = "pelmenisaur",
 		Name = "Пельменозавр",
 		Rarity = "Epic",
-		Price = 80000,
+		Price = 312000,
 		Income = 1300,
 		Body = Color3.fromRGB(245, 240, 225),
 		Accent = Color3.fromRGB(90, 140, 70),
@@ -168,7 +169,7 @@ Kaiju.List = {
 		Id = "slime_shlepa",
 		Name = "Слайм-Шлёпа",
 		Rarity = "Epic",
-		Price = 180000,
+		Price = 780000,
 		Income = 2600,
 		Body = Color3.fromRGB(215, 155, 95),
 		Accent = Color3.fromRGB(25, 25, 30),
@@ -178,7 +179,7 @@ Kaiju.List = {
 		Id = "boxer_crab",
 		Name = "Краб-Боксёр",
 		Rarity = "Epic",
-		Price = 420000,
+		Price = 2050000,
 		Income = 5400,
 		Body = Color3.fromRGB(235, 70, 50),
 		Accent = Color3.fromRGB(250, 230, 60),
@@ -188,7 +189,7 @@ Kaiju.List = {
 		Id = "interceptor_seagull",
 		Name = "Чайка-Перехватчик",
 		Rarity = "Epic",
-		Price = 900000,
+		Price = 5000000,
 		Income = 10500,
 		Body = Color3.fromRGB(235, 240, 245),
 		Accent = Color3.fromRGB(40, 45, 60),
@@ -198,7 +199,7 @@ Kaiju.List = {
 		Id = "bananosaur",
 		Name = "Бананозавр",
 		Rarity = "Epic",
-		Price = 1800000,
+		Price = 11400000,
 		Income = 19000,
 		Body = Color3.fromRGB(255, 225, 50),
 		Accent = Color3.fromRGB(90, 60, 30),
@@ -206,13 +207,13 @@ Kaiju.List = {
 	},
 
 	-- =========================================================================
-	-- LEGENDARY (Price: $3,800,000 - $22,000,000, Payback: 110s - 157s)
+	-- LEGENDARY (Price: $41M - $336M, Payback: 20 - 40 min)
 	-- =========================================================================
 	{
 		Id = "catzilla",
 		Name = "Котзилла",
 		Rarity = "Legendary",
-		Price = 3800000,
+		Price = 41000000,
 		Income = 34500,
 		Body = Color3.fromRGB(50, 50, 60),
 		Accent = Color3.fromRGB(80, 220, 255),
@@ -222,7 +223,7 @@ Kaiju.List = {
 		Id = "avocado_monster",
 		Name = "Авокадо-Монстр",
 		Rarity = "Legendary",
-		Price = 7500000,
+		Price = 90000000,
 		Income = 60000,
 		Body = Color3.fromRGB(115, 160, 45),
 		Accent = Color3.fromRGB(70, 45, 25),
@@ -232,7 +233,7 @@ Kaiju.List = {
 		Id = "king_crab",
 		Name = "Кинг-Краб",
 		Rarity = "Legendary",
-		Price = 13500000,
+		Price = 173000000,
 		Income = 96000,
 		Body = Color3.fromRGB(180, 30, 40),
 		Accent = Color3.fromRGB(255, 205, 40),
@@ -242,7 +243,7 @@ Kaiju.List = {
 		Id = "grill_phoenix",
 		Name = "Гриль-Феникс",
 		Rarity = "Legendary",
-		Price = 22000000,
+		Price = 336000000,
 		Income = 140000,
 		Body = Color3.fromRGB(255, 80, 20),
 		Accent = Color3.fromRGB(255, 220, 50),
@@ -250,14 +251,14 @@ Kaiju.List = {
 	},
 
 	-- =========================================================================
-	-- MYTHIC (Price: $30,000,000 - $46,000,000, Payback: 176s - 209s)
+	-- MYTHIC (Price: $1.44B - $11.5B, Payback: 1 - 2 h)
 	-- =========================================================================
 	{
 		Id = "mecha_godzilych",
 		Name = "Меха-Годзилыч",
 		Rarity = "Mythic",
-		Price = 30000000,
-		Income = 170000,
+		Price = 1440000000,
+		Income = 400000,
 		Body = Color3.fromRGB(175, 185, 195),
 		Accent = Color3.fromRGB(255, 40, 70),
 		Shape = "Dino",
@@ -266,8 +267,8 @@ Kaiju.List = {
 		Id = "black_hole_blob",
 		Name = "Чёрная Дырочка",
 		Rarity = "Mythic",
-		Price = 36000000,
-		Income = 195000,
+		Price = 3500000000,
+		Income = 700000,
 		Body = Color3.fromRGB(20, 15, 30),
 		Accent = Color3.fromRGB(255, 110, 230),
 		Shape = "Blob",
@@ -276,8 +277,8 @@ Kaiju.List = {
 		Id = "crab_armageddon",
 		Name = "Краб-Армагеддон",
 		Rarity = "Mythic",
-		Price = 41000000,
-		Income = 210000,
+		Price = 6600000000,
+		Income = 1100000,
 		Body = Color3.fromRGB(45, 20, 25),
 		Accent = Color3.fromRGB(255, 60, 20),
 		Shape = "Crab",
@@ -286,22 +287,22 @@ Kaiju.List = {
 		Id = "shawarmasaur",
 		Name = "Шаурмозавр",
 		Rarity = "Mythic",
-		Price = 46000000,
-		Income = 220000,
+		Price = 11500000000,
+		Income = 1600000,
 		Body = Color3.fromRGB(215, 175, 115),
 		Accent = Color3.fromRGB(220, 45, 45),
 		Shape = "Tall",
 	},
 
 	-- =========================================================================
-	-- SECRET (Price: $50,000,000 - $58,000,000, Payback: ~208s - 211s)
+	-- SECRET (Price: $43B - $216B, Payback: 4 - 5 h)
 	-- =========================================================================
 	{
 		Id = "cosmo_capybara",
 		Name = "Космо-Капибара",
 		Rarity = "Secret",
-		Price = 50000000,
-		Income = 240000,
+		Price = 43000000000,
+		Income = 3000000,
 		Body = Color3.fromRGB(130, 95, 70),
 		Accent = Color3.fromRGB(0, 255, 210),
 		Shape = "Blob",
@@ -310,8 +311,8 @@ Kaiju.List = {
 		Id = "giga_shlepa",
 		Name = "Гига-Шлёпа",
 		Rarity = "Secret",
-		Price = 52500000,
-		Income = 250000,
+		Price = 80000000000,
+		Income = 5000000,
 		Body = Color3.fromRGB(200, 140, 85),
 		Accent = Color3.fromRGB(170, 0, 255),
 		Shape = "Tall",
@@ -320,8 +321,8 @@ Kaiju.List = {
 		Id = "baton_dragon",
 		Name = "Дракон-Батон",
 		Rarity = "Secret",
-		Price = 55000000,
-		Income = 260000,
+		Price = 130000000000,
+		Income = 8000000,
 		Body = Color3.fromRGB(230, 185, 110),
 		Accent = Color3.fromRGB(255, 240, 180),
 		Shape = "Bird",
@@ -330,8 +331,8 @@ Kaiju.List = {
 		Id = "cyber_titan_rex",
 		Name = "Кибер-Титан",
 		Rarity = "Secret",
-		Price = 58000000,
-		Income = 275000,
+		Price = 216000000000,
+		Income = 12000000,
 		Body = Color3.fromRGB(30, 35, 45),
 		Accent = Color3.fromRGB(0, 255, 180),
 		Shape = "Dino",

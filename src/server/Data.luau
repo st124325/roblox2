@@ -24,6 +24,7 @@ export type Profile = {
 	Slots: { [number]: SlotEntry },
 	Bank: number,
 	LastOnline: number,
+	Reserved: { [number]: SlotEntry }?, -- slots whose kaiju a thief is carrying (saved as normal slots)
 	Stats: {
 		Bought: number,
 		Stolen: number,
@@ -192,8 +193,20 @@ end
 
 local function serializeProfile(profile: Profile): StoredProfileData
 	local storedSlots: StoredSlots = {}
+	-- A kaiju a thief is still carrying belongs to the owner until it is delivered
+	local allSlots = {}
+	if typeof(profile.Reserved) == "table" then
+		for slotNum, entry in profile.Reserved do
+			allSlots[slotNum] = entry
+		end
+	end
 	if typeof(profile.Slots) == "table" then
 		for slotNum, entry in profile.Slots do
+			allSlots[slotNum] = entry
+		end
+	end
+	do
+		for slotNum, entry in allSlots do
 			local num = tonumber(slotNum)
 			if num and typeof(entry) == "table" and typeof(entry.Id) == "string" then
 				storedSlots[tostring(math.floor(num))] = {

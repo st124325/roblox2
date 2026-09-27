@@ -153,7 +153,7 @@ local function animateMoney(target: number)
 	local duration = math.clamp(0.2 + math.log10(math.abs(diff) + 1) * 0.08, 0.25, 0.6)
 	local tween = TweenService:Create(
 		nv,
-		TweenInfo.new(duration, Enum.EasingStyle.Out, Enum.EasingDirection.Quad),
+		TweenInfo.new(duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 		{ Value = target }
 	)
 	activeMoneyTween = tween
