@@ -70,7 +70,8 @@ local function onPromptTriggered(prompt: ProximityPrompt, player: Player)
 	local entry = { Id = def.Id, Growth = 0, Mutation = nil }
 	local slot = Bases.addKaiju(player, entry)
 	if not slot then
-		Net.event("Notify"):FireClient(player, "bad", "No free slots on your base!")
+		local unlocked = Bases.unlockedSlots(player)
+		Net.event("Notify"):FireClient(player, "bad", "Base full (" .. unlocked .. "/" .. unlocked .. ")! Sell a kaiju or Rebirth to unlock more slots.")
 		return
 	end
 

@@ -167,6 +167,29 @@ end
 -- ---------------------------------------------------------------------------
 
 -- Place a kaiju model on its pad (anchored, standing on the pad surface)
+-- Pads beyond the owner's unlocked count are greyed out with a lock, so a base that
+-- "looks" half empty doesn't confuse players when the conveyor says it's full.
+local PAD_COLOR = Color3.fromRGB(54, 58, 66)
+local PAD_LOCKED_COLOR = Color3.fromRGB(28, 30, 34)
+local padLabelColors: { [BasePart]: Color3 } = {}
+
+local function refreshPads(base: BaseInfo, unlocked: number)
+	for i, pad in base.Pads do
+		local gui = pad:FindFirstChild("PadGui")
+		local label = gui and gui:FindFirstChild("SlotNumber") :: TextLabel?
+		if label and not padLabelColors[pad] then
+			padLabelColors[pad] = label.TextColor3
+		end
+		local open = i <= unlocked
+		pad.Color = if open then PAD_COLOR else PAD_LOCKED_COLOR
+		pad.Transparency = if open then 0 else 0.45
+		if label then
+			label.Text = if open then "#" .. i else "🔒 Rebirth"
+			label.TextColor3 = if open then padLabelColors[pad] else Color3.fromRGB(140, 140, 150)
+		end
+	end
+end
+
 local function placeModelOnPad(player: Player, slot: number, entry: SlotEntry): Model?
 	local baseIdx = baseByPlayer[player]
 	if not baseIdx then
@@ -427,6 +450,7 @@ local function assignBase(player: Player)
 			baseByPlayer[player] = base.Index
 			player:SetAttribute("BaseIndex", base.Index)
 			setSignText(base, player.Name)
+			refreshPads(base, Bases.unlockedSlots(player))
 
 			-- Offline income
 			local now = os.time()
@@ -517,6 +541,7 @@ local function releaseBase(player: Player)
 	-- Reset sign
 	if base then
 		setSignText(base, "Available")
+		refreshPads(base, Config.MaxSlots)
 		updateBankDisplay(base, 0)
 		updateLockDisplay(base, nil)
 	end
@@ -705,6 +730,10 @@ local function setupRemotes()
 
 		Data.setRebirths(player, profile.Rebirths + 1)
 		refreshIncomeAttribute(player)
+		local rebirthBase = Bases.baseOf(player)
+		if rebirthBase then
+			refreshPads(rebirthBase, Bases.unlockedSlots(player))
+		end
 		notify(player, "good", "Rebirth #" .. profile.Rebirths .. "! +50% income, +" .. Config.SlotsPerRebirth .. " slot(s)")
 	end)
 end
@@ -829,6 +858,7 @@ function Bases.init()
 		setupCollectPlate(base)
 		setupLockButton(base)
 		setSignText(base, "Available")
+		refreshPads(base, Config.MaxSlots)
 	end
 
 	-- Set up remote event handlers
