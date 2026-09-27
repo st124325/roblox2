@@ -16,16 +16,16 @@ export type Item = {
 }
 
 Products.Passes = {
-	DoubleCash = { Id = 0, Name = "2x Cash", Desc = "Double income from every kaiju, forever", Price = 199, Icon = "💰", Order = 1 },
-	VIP = { Id = 0, Name = "VIP", Desc = "+1 pad, +20% income and a VIP tag", Price = 249, Icon = "👑", Order = 2 },
-	AutoCollect = { Id = 0, Name = "Auto Collect", Desc = "Cash goes straight to your wallet", Price = 99, Icon = "🧲", Order = 3 },
-	ExtraSlots = { Id = 0, Name = "+2 Pads", Desc = "Two more kaiju on your base", Price = 149, Icon = "🧱", Order = 4 },
-	FastLegs = { Id = 0, Name = "Fast Legs", Desc = "Run 25% faster (not while carrying)", Price = 99, Icon = "👟", Order = 5 },
+	DoubleCash = { Id = 1998237038, Name = "2x Cash", Desc = "Double income from every kaiju, forever", Price = 199, Icon = "💰", Order = 1 },
+	VIP = { Id = 1999101058, Name = "VIP", Desc = "+1 pad, +20% income and a VIP tag", Price = 249, Icon = "👑", Order = 2 },
+	AutoCollect = { Id = 1999460973, Name = "Auto Collect", Desc = "Cash goes straight to your wallet", Price = 99, Icon = "🧲", Order = 3 },
+	ExtraSlots = { Id = 1999539032, Name = "+2 Pads", Desc = "Two more kaiju on your base", Price = 149, Icon = "🧱", Order = 4 },
+	FastLegs = { Id = 1998213008, Name = "Fast Legs", Desc = "Run 25% faster (not while carrying)", Price = 99, Icon = "👟", Order = 5 },
 } :: { [string]: Pass }
 
 Products.Items = {
 	StarterPack = {
-		Id = 0,
+		Id = 3715108622,
 		Name = "Starter Pack",
 		Desc = "1 h of cash + 30 min Shield + Grow Boost. Once, first 24 h only!",
 		Price = 99,
@@ -34,31 +34,31 @@ Products.Items = {
 		Seconds = 3600,
 		Min = 25_000,
 	},
-	UnlockPad = { Id = 0, Name = "Unlock a Pad", Desc = "Open your next locked pad right now (kept after rebirth)", Price = 49, Icon = "🔓", Order = 1 },
-	Shield10 = { Id = 0, Name = "Shield 10 min", Desc = "Nobody can enter your base", Price = 29, Icon = "🛡️", Order = 1 },
-	Shield30 = { Id = 0, Name = "Shield 30 min", Desc = "Nobody can enter your base", Price = 69, Icon = "🛡️", Order = 2 },
-	GrowBoost = { Id = 0, Name = "Grow Boost", Desc = "+15 min of growth for every kaiju", Price = 49, Icon = "🌱", Order = 3 },
+	UnlockPad = { Id = 3715108627, Name = "Unlock a Pad", Desc = "Open your next locked pad right now (kept after rebirth)", Price = 49, Icon = "🔓", Order = 1 },
+	Shield10 = { Id = 3715108631, Name = "Shield 10 min", Desc = "Nobody can enter your base", Price = 29, Icon = "🛡️", Order = 1 },
+	Shield30 = { Id = 3715108633, Name = "Shield 30 min", Desc = "Nobody can enter your base", Price = 69, Icon = "🛡️", Order = 2 },
+	GrowBoost = { Id = 3715108635, Name = "Grow Boost", Desc = "+15 min of growth for every kaiju", Price = 49, Icon = "🌱", Order = 3 },
 	CashRain = {
-		Id = 0,
+		Id = 3715108639,
 		Name = "Cash Rain",
 		Desc = "2x cash for EVERYONE on the server for 5 min — with your name on it",
 		Price = 199,
 		Icon = "💸",
 		Order = 4,
 	},
-	CashSmall = { Id = 0, Name = "Pile of Cash", Desc = "10 min of your income", Price = 49, Icon = "💵", Order = 5, Seconds = 600, Min = 1_000 },
-	CashMedium = { Id = 0, Name = "Bag of Cash", Desc = "1 h of your income", Price = 199, Icon = "💰", Order = 6, Seconds = 3600, Min = 10_000 },
-	CashLarge = { Id = 0, Name = "Vault of Cash", Desc = "4 h of your income", Price = 499, Icon = "🏦", Order = 7, Seconds = 4 * 3600, Min = 100_000 },
-	CashHuge = { Id = 0, Name = "Cash Tsunami", Desc = "16 h of your income", Price = 1499, Icon = "🌊", Order = 8, Seconds = 16 * 3600, Min = 1_000_000 },
+	CashSmall = { Id = 3715108642, Name = "Pile of Cash", Desc = "10 min of your income", Price = 49, Icon = "💵", Order = 5, Seconds = 600, Min = 1_000 },
+	CashMedium = { Id = 3715108645, Name = "Bag of Cash", Desc = "1 h of your income", Price = 199, Icon = "💰", Order = 6, Seconds = 3600, Min = 10_000 },
+	CashLarge = { Id = 3715108650, Name = "Vault of Cash", Desc = "4 h of your income", Price = 499, Icon = "🏦", Order = 7, Seconds = 4 * 3600, Min = 100_000 },
+	CashHuge = { Id = 3715108654, Name = "Cash Tsunami", Desc = "16 h of your income", Price = 1499, Icon = "🌊", Order = 8, Seconds = 16 * 3600, Min = 1_000_000 },
 } :: { [string]: Item }
 
 -- Gifting a pass is a developer product per pass (passes themselves can't be bought for someone else).
 Products.Gifts = {
-	DoubleCash = { Id = 0 },
-	VIP = { Id = 0 },
-	AutoCollect = { Id = 0 },
-	ExtraSlots = { Id = 0 },
-	FastLegs = { Id = 0 },
+	DoubleCash = { Id = 3715108673 },
+	VIP = { Id = 3715108677 },
+	AutoCollect = { Id = 3715108683 },
+	ExtraSlots = { Id = 3715108688 },
+	FastLegs = { Id = 3715108697 },
 } :: { [string]: { Id: number } }
 
 -- Unlocking pads for cash: the n-th bought pad (1-based) costs PadBaseCost * PadCostGrowth^(n-1)
@@ -73,9 +73,9 @@ end
 -- rewards worth 3-10 Robux); ads only run once the game has 2,000+ monthly visitors.
 export type AdReward = { Id: number, Name: string, Desc: string, Icon: string, Seconds: number?, Min: number? }
 Products.AdRewards = {
-	AdCash = { Id = 0, Name = "Free Cash", Desc = "10 min of your income", Icon = "💵", Seconds = 600, Min = 500 },
-	AdShield = { Id = 0, Name = "Free Shield 5 min", Desc = "Nobody can enter your base", Icon = "🛡️" },
-	AdDoubleOffline = { Id = 0, Name = "Double Offline Cash", Desc = "Get your offline earnings again", Icon = "🌙" },
+	AdCash = { Id = 3715108658, Name = "Free Cash", Desc = "10 min of your income", Icon = "💵", Seconds = 600, Min = 500 },
+	AdShield = { Id = 3715108664, Name = "Free Shield 5 min", Desc = "Nobody can enter your base", Icon = "🛡️" },
+	AdDoubleOffline = { Id = 3715108669, Name = "Double Offline Cash", Desc = "Get your offline earnings again", Icon = "🌙" },
 } :: { [string]: AdReward }
 Products.AdCooldownSeconds = 180 -- per player, per reward
 
