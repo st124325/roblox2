@@ -1,0 +1,10 @@
+# Built place files (rebuild with `rojo build -o StealAKaiju.rbxlx`)
+*.rbxl
+*.rbxlx
+*.rbxm
+*.rbxmx
+
+# Editor / OS
+.vscode/
+.DS_Store
+sourcemap.json
