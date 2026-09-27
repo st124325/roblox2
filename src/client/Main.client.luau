@@ -11,6 +11,7 @@ local Hud = require(script.Parent:WaitForChild("Hud"))
 local Toasts = require(script.Parent:WaitForChild("Toasts"))
 local FloatingText = require(script.Parent:WaitForChild("FloatingText"))
 local Tutorial = require(script.Parent:WaitForChild("Tutorial"))
+local ShopUi = require(script.Parent:WaitForChild("ShopUi"))
 local Sounds = require(Shared:WaitForChild("Sounds"))
 
 local player = Players.LocalPlayer
@@ -19,6 +20,7 @@ local player = Players.LocalPlayer
 local screenGui = Hud.init(player)
 Toasts.init(screenGui)
 Tutorial.init(screenGui)
+ShopUi.init(screenGui)
 
 -- 2. Read and apply initial attributes
 local function readAttributeNumber(name: string): number
