@@ -115,7 +115,7 @@ local function filterPrompt(prompt: Instance)
 		return
 	end
 	local isMine = ownerId == player.UserId
-	if prompt.Name == "SellPrompt" then
+	if prompt.Name == "SellPrompt" or prompt.Name == "UnlockPrompt" then
 		prompt.Enabled = isMine
 	elseif prompt.Name == "Steal" then
 		prompt.Enabled = not isMine

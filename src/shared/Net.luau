@@ -8,6 +8,10 @@ local EVENTS = {
 	"Rebirth", -- C->S  request a rebirth
 	"Robbed", -- S->C  thiefName, kaijuName (someone grabbed your kaiju)
 	"Cash", -- S->C  amount, worldPosition (floating "+$" text)
+	"Buy", -- C->S  kind ("Pass" | "Item"), key
+	"Gift", -- C->S  passKey, targetUserId
+	"Offer", -- S->C  itemKey, reasonText (contextual purchase suggestion)
+	"Announce", -- S->C  text (server-wide banner, e.g. a Cash Rain)
 }
 local FUNCTIONS = {}
 

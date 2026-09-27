@@ -634,8 +634,11 @@ local function createTag(
 	stageLabel.Font = Enum.Font.GothamMedium
 	stageLabel.Text = "Stage S"
 	stageLabel.TextColor3 = Color3.fromRGB(200, 220, 255)
-	stageLabel.TextSize = 11
+	stageLabel.TextScaled = true -- "Stage XL · Sell $1.2M" must fit the card
 	stageLabel.Parent = card
+	local stageLimit = Instance.new("UITextSizeConstraint")
+	stageLimit.MaxTextSize = 11
+	stageLimit.Parent = stageLabel
 
 	return tag
 end

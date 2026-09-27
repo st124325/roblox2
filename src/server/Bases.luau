@@ -146,6 +146,26 @@ local function updateLockDisplay(base: BaseInfo, remaining: number?)
 end
 
 -- Compute total income/s for a player across all slots
+-- Hooks the Shop overrides: pass/event income multiplier, auto-collect and bonus pads.
+function Bases.multiplierFor(_player: Player): number
+	return 1
+end
+function Bases.autoCollectFor(_player: Player): boolean
+	return false
+end
+function Bases.extraSlotsFor(_player: Player): number
+	return 0
+end
+-- Text for the next locked pad's unlock prompt (nil = no prompt) and what pressing it does.
+function Bases.padUnlockText(_player: Player): string?
+	return nil
+end
+function Bases.onPadUnlock(_player: Player) end
+
+local function incomeFor(player: Player, entry: SlotEntry, rebirths: number): number
+	return Kaiju.incomeOf(entry, rebirths) * Bases.multiplierFor(player)
+end
+
 local function computeTotalIncome(player: Player): number
 	local profile = Data.get(player)
 	if not profile then
@@ -153,7 +173,7 @@ local function computeTotalIncome(player: Player): number
 	end
 	local total = 0
 	for _, entry in profile.Slots do
-		total += Kaiju.incomeOf(entry, profile.Rebirths)
+		total += incomeFor(player, entry, profile.Rebirths)
 	end
 	return total
 end
@@ -182,6 +202,33 @@ local function refreshPads(base: BaseInfo, unlocked: number)
 			padLabelColors[pad] = label.TextColor3
 		end
 		local open = i <= unlocked
+		-- The first locked pad can be unlocked by its owner (cash or Robux, see Shop)
+		local owner = ownerByBase[base.Index]
+		local prompt = pad:FindFirstChild("UnlockPrompt") :: ProximityPrompt?
+		local unlockText = if owner and i == unlocked + 1 then Bases.padUnlockText(owner) else nil
+		if unlockText then
+			if not prompt then
+				local created = Instance.new("ProximityPrompt")
+				created.Name = "UnlockPrompt"
+				created.ObjectText = "Locked pad"
+				created.HoldDuration = 0.3
+				created.MaxActivationDistance = 10
+				created.RequiresLineOfSight = false
+				created:SetAttribute("OwnerId", (owner :: Player).UserId) -- set before parenting: the client filters on arrival
+				created.Triggered:Connect(function(triggerPlayer: Player)
+					if ownerByBase[base.Index] == triggerPlayer then
+						Bases.onPadUnlock(triggerPlayer)
+					end
+				end)
+				created.Parent = pad
+				prompt = created
+			end
+			local p = prompt :: ProximityPrompt
+			p.ActionText = unlockText
+			p:SetAttribute("OwnerId", (owner :: Player).UserId) -- client shows it to the owner only
+		elseif prompt then
+			prompt:Destroy()
+		end
 		pad.Color = if open then PAD_COLOR else PAD_LOCKED_COLOR
 		pad.Transparency = if open then 0 else 0.45
 		if label then
@@ -229,8 +276,8 @@ local function placeModelOnPad(player: Player, slot: number, entry: SlotEntry): 
 	end
 
 	-- Update Tag info
-	local incomeText = Format.rate(Kaiju.incomeOf(entry, (Data.get(player) :: any).Rebirths))
-	local stageText = "Stage " .. stage.Name
+	local incomeText = Format.rate(incomeFor(player, entry, (Data.get(player) :: any).Rebirths))
+	local stageText = "Stage " .. stage.Name .. " · Sell " .. Format.money(Kaiju.sellValue(entry))
 	KaijuModel.setInfo(model, incomeText, stageText)
 
 	-- Add ProximityPrompt "Sell" for the owner
@@ -340,7 +387,7 @@ end
 function Bases.unlockedSlots(player: Player): number
 	local profile = Data.get(player)
 	local rebirths = if profile then profile.Rebirths else 0
-	local count = Config.StartSlots + rebirths * Config.SlotsPerRebirth
+	local count = Config.StartSlots + rebirths * Config.SlotsPerRebirth + Bases.extraSlotsFor(player)
 	return math.min(count, Config.MaxSlots)
 end
 
@@ -427,6 +474,15 @@ function Bases.hasFreeSlot(player: Player): boolean
 	return false
 end
 
+-- Recompute the Income attribute and the pad locks (after a pass or event changes them).
+function Bases.refresh(player: Player)
+	refreshIncomeAttribute(player)
+	local base = Bases.baseOf(player)
+	if base then
+		refreshPads(base, Bases.unlockedSlots(player))
+	end
+end
+
 function Bases.slotModel(player: Player, slot: number): Model?
 	if slotModels[player] then
 		return slotModels[player][slot]
@@ -461,7 +517,7 @@ local function assignBase(player: Player)
 				-- Compute income from saved slots
 				local offlineIncome = 0
 				for _, entry in profile.Slots do
-					offlineIncome += Kaiju.incomeOf(entry, profile.Rebirths)
+					offlineIncome += incomeFor(player, entry, profile.Rebirths)
 				end
 				local earned = math.floor(offlineIncome * offlineSeconds * Config.OfflineRate)
 				if earned > 0 then
@@ -844,22 +900,27 @@ local function onHeartbeat(dt: number)
 						end
 						local model = if slotModels[owner] then slotModels[owner][slot] else nil
 						if model then
-							local incomeVal = Kaiju.incomeOf(entry, profile.Rebirths)
+							local incomeVal = incomeFor(owner, entry, profile.Rebirths)
 							KaijuModel.setInfo(
 								model,
 								Format.rate(incomeVal),
-								"Stage " .. newStage.Name
+								"Stage " .. newStage.Name .. " · Sell " .. Format.money(Kaiju.sellValue(entry))
 							)
 						end
 					end
 
 					-- Accumulate income for this tick
-					tickIncome += Kaiju.incomeOf(entry, profile.Rebirths)
+					tickIncome += incomeFor(owner, entry, profile.Rebirths)
 				end
 
 				profile.LastOnline = os.time()
 				if tickIncome > 0 then
-					profile.Bank += tickIncome * INCOME_TICK
+					if Bases.autoCollectFor(owner) then
+						Data.addMoney(owner, tickIncome * INCOME_TICK + profile.Bank)
+						profile.Bank = 0
+					else
+						profile.Bank += tickIncome * INCOME_TICK
+					end
 					updateBankDisplay(base, profile.Bank)
 				end
 
