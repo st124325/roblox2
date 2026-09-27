@@ -50,6 +50,27 @@ local Config = {
 		{ Name = "XL", Seconds = 1800, Income = 3.5, Carry = 0.6, Scale = 1.9 },
 		{ Name = "Titan", Seconds = 5400, Income = 6, Carry = 0.45, Scale = 2.4 },
 	},
+
+	-- Mutations: multipliers for income boost (GDD: ×2..×10)
+	MutationMultipliers = {
+		Radioactive = 2,
+		Golden = 3,
+		Rainbow = 5,
+		Galaxy = 10,
+		["Радиоактивный"] = 2,
+		["Золотой"] = 3,
+		["Радужный"] = 5,
+		["Галактический"] = 10,
+	},
+	Mutations = { "Radioactive", "Golden", "Rainbow", "Galaxy" },
+
+	-- Data persistence
+	StartMoney = 50,
+	DataStoreName = "PlayerData_v1",
+	DataAutoSaveInterval = 60,
+	SessionLockTimeout = 1800,
+	DataMaxRetries = 5,
+	DataRetryDelay = 2,
 }
 
 function Config.stageFor(growth: number): (number, any)

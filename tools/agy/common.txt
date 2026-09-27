@@ -1,0 +1,9 @@
+Ты работаешь в Roblox-проекте /root/roblox2 (Rojo, Luau). Сначала прочитай docs/ARCH.md (контракт модулей — соблюдай API в точности), docs/GDD.md, src/shared/Config.luau, Format.luau, Net.luau.
+Правила:
+- Трогай ТОЛЬКО перечисленные ниже файлы. Параллельно другие агенты пишут остальные модули. Не делай git commit.
+- Если нужен новый параметр — можешь добавить ключ в src/shared/Config.luau (только добавление новых ключей, не меняй существующие).
+- Проверяй синтаксис: `luau-compile --binary <file> >/dev/null` для каждого своего файла, и `luau-analyze <file>` (ошибки про неизвестные Roblox-глобалы типа game/Instance/Vector3 игнорируй).
+- Код качественный, продакшен-уровня, без заглушек и TODO. Стиль как в src/shared (табы, английские комментарии).
+- В конце выведи краткий отчёт: какие файлы, какой публичный API, допущения.
+Задача:
+Уже готовы и проверены (не меняй их, только читай): src/shared/Kaiju.luau, KaijuModel.luau, src/server/Data.luau (есть также Data.setMoney, Data.setRebirths, Data.save), src/server/Map.luau, src/server/Main.server.luau (порядок: Map.build, Bases.init, Carry.init, Conveyor.init, Data.init — твой init вызывается ДО Data.init, подписывайся на Data.loaded и PlayerRemoving), src/client/*.
