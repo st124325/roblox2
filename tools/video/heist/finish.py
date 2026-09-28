@@ -79,6 +79,7 @@ def final():
     filt=('loudnorm=I=-14:TP=-1:LRA=9:linear=true:'
         f"measured_I={levels['input_i']}:measured_TP={levels['input_tp']}:"
         f"measured_LRA={levels['input_lra']}:measured_thresh={levels['input_thresh']}:offset={levels['target_offset']}")
+    filt += ',afade=t=in:st=0:d=0.015,afade=t=out:st=21.8:d=0.2'
     out=B/'delivery/tiktok-heist.mp4'
     run('ffmpeg','-y','-f','concat','-safe','0','-i',str(B/'concat.txt'),'-i',str(B/'master.wav'),
         '-map','0:v:0','-map','1:a:0','-vf',f"setpts=N/(30*TB),ass={B/'captions.ass'}",'-r','30',
