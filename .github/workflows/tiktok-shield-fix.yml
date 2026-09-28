@@ -1,0 +1,83 @@
+name: TikTok corrected shield
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/tiktok-shield-fix.yml', 'tools/video/repair_shield_ci.py']
+permissions:
+  actions: read
+  contents: read
+jobs:
+  repair:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ['13', '14', '15', '16']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: prepared-scene
+          path: build/
+          run-id: 36434582079
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install Blender
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y xvfb libgl1-mesa-dri libegl1 libxi6 libxrender1 libxfixes3 libxkbcommon0
+          curl --fail --retry 3 -L https://download.blender.org/release/Blender4.3/blender-4.3.2-linux-x64.tar.xz -o /tmp/blender.tar.xz
+          tar -xf /tmp/blender.tar.xz -C /tmp
+          echo /tmp/blender-4.3.2-linux-x64 >> "$GITHUB_PATH"
+      - name: Replace noisy transparency with clean shield rings
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+          CHUNK: ${{ matrix.chunk }}
+        run: |
+          blender -b build/ad.blend --python tools/video/repair_shield_ci.py
+          mkdir -p build/shots
+          xvfb-run -a blender -b build/ad.blend -t 4 --python tools/video/render_ci.py -- "$CHUNK" "build/shots/part-$CHUNK.mp4"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: repaired-${{ matrix.chunk }}
+          path: build/shots/
+          retention-days: 7
+  assemble:
+    needs: repair
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: shot-*
+          path: build/shots/
+          merge-multiple: true
+          run-id: 36434582079
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: repaired-*
+          path: build/shots/
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: prepared-scene
+          path: build/
+          run-id: 36434582079
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Assemble corrected video
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          python3 tools/video/assemble_ci.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tiktok-american-1080x1920
+          path: build/delivery/
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prepared-scene
+          path: build/
+          retention-days: 7

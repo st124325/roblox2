@@ -278,11 +278,12 @@ ground(X, hexcol("#2B5BD8"))
 for i, model in enumerate(("Blob_Cat", "Flying_Glub", "Blob_Dog")):
     box("Pad", (3.4, 3.4, 0.3), (X - 5 + i * 5, 0, 0.15), hexcol("#36394A"))
     monster(model, (X - 5 + i * 5, 0, 0.3), 2.6)
-bpy.ops.mesh.primitive_uv_sphere_add(radius=8, location=(X, 0, 0), segments=48, ring_count=24)
-dome = bpy.context.active_object
-dome.data.materials.append(material("Dome", hexcol("#6FD8FF"), emission=0.25, alpha=0.12))
-dome.visible_shadow = False
-pop(dome, vo + 4, base=1.0, over=1.1)
+for rotation in ((0, 0, 0), (math.pi / 2, 0, 0), (0, math.pi / 2, 0)):
+    bpy.ops.mesh.primitive_torus_add(major_radius=8, minor_radius=0.055,
+        major_segments=96, minor_segments=8, location=(X, 0, 0), rotation=rotation)
+    ring = bpy.context.active_object
+    ring.data.materials.append(material("ShieldRing", hexcol("#6FD8FF"), emission=2))
+    pop(ring, vo + 4, base=1.0, over=1.1)
 third = (f1 - vo) // 3
 camera_shot(f0, f1, (X, -19, 6), (X, -17, 5.5), (X, 0, 2.5), (X, 0, 2.5))
 text("LOCK", 1.6, CYAN, 0.72, vo, f1)
