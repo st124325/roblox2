@@ -3,7 +3,7 @@ on:
   workflow_run:
     workflows: [TikTok American voice ad]
     types: [completed]
-    branches: [promo/tiktok-american]
+    branches: [promo/tiktok-american, main]
 permissions:
   actions: read
   contents: write
@@ -29,6 +29,7 @@ jobs:
           cp delivery/subtitles.srt tiktok-american.srt
           cp delivery/licenses.txt tiktok-licenses.txt
           cp delivery/README.md TIKTOK-VIDEO.md
+          sed -i 's/subtitles.srt/tiktok-american.srt/g; s/Review images: frame-\*.png./Preview: tiktok-preview.png./g' TIKTOK-VIDEO.md
           git add tiktok-american.mp4 tiktok-preview.png tiktok-american.srt tiktok-licenses.txt TIKTOK-VIDEO.md
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
