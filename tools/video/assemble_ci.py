@@ -14,7 +14,7 @@ out.mkdir(exist_ok=True)
 timeline = json.loads((build / 'timeline.json').read_text())
 shots = timeline['shots']
 fps = timeline['fps']
-(build / 'concat.txt').write_text(''.join(f"file 'shots/{key}.mp4'\n" for key in shots))
+(build / 'concat.txt').write_text(''.join(f"file 'shots/part-{i:02}.mp4'\n" for i in range(20)))
 run('ffmpeg', '-y', '-f', 'concat', '-safe', '0', '-i', str(build / 'concat.txt'),
     '-c:v', 'copy', '-af', 'loudnorm=I=-14:TP=-1:LRA=9', '-c:a', 'aac', '-b:a', '192k',
     '-ar', '48000', '-movflags', '+faststart', str(out / 'tiktok-american.mp4'))

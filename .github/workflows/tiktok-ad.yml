@@ -36,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shot: [hook, belt, cash, grow, steal, defend, outro]
+        chunk: ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
@@ -53,13 +53,13 @@ jobs:
       - name: Render vertical shot and review frame
         env:
           LIBGL_ALWAYS_SOFTWARE: '1'
-          SHOT: ${{ matrix.shot }}
+          CHUNK: ${{ matrix.chunk }}
         run: |
           mkdir -p build/shots
-          xvfb-run -a blender -b build/ad.blend -t 4 --python tools/video/render_ci.py -- "$SHOT" "build/shots/$SHOT.mp4"
+          xvfb-run -a blender -b build/ad.blend -t 4 --python tools/video/render_ci.py -- "$CHUNK" "build/shots/part-$CHUNK.mp4"
       - uses: actions/upload-artifact@v4
         with:
-          name: shot-${{ matrix.shot }}
+          name: shot-${{ matrix.chunk }}
           path: build/shots/
           retention-days: 7
   assemble:

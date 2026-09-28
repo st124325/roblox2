@@ -2,7 +2,7 @@
 
 Push video changes to `promo/tiktok-american`; `.github/workflows/tiktok-ad.yml`
 generates Joe (en_US) speech with Piper, converts the existing monster meshes,
-prepares a Blender 4.3.2 scene, renders seven shots on separate runners, then
+prepares a Blender 4.3.2 scene, renders seven shots as 20 chunks on separate runners, then
 assembles and checks a 1080×1920 H.264/AAC MP4. All media generation runs in CI.
 
 The final artifact is `tiktok-american-1080x1920` (90 days); download files also

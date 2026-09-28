@@ -46,7 +46,7 @@ END = cursor - 1
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene = bpy.context.scene
 scene.render.engine = "BLENDER_EEVEE_NEXT"
-scene.eevee.taa_render_samples = 16
+scene.eevee.taa_render_samples = 4
 scene.render.resolution_x, scene.render.resolution_y = 1080, 1920
 scene.render.fps = FPS
 scene.frame_start, scene.frame_end = 1, END
@@ -139,12 +139,12 @@ def text(body, size, color, y, first, last, pop_at=None, tilt=0.0):
         curve = bpy.data.curves.new("Text", "FONT")
         curve.body, curve.font, curve.size = body, FONT, size
         curve.align_x = curve.align_y = "CENTER"
-        curve.offset = offset
+        curve.offset = 0  # Expanded font curves self-intersect; use a clean drop shadow.
         obj = bpy.data.objects.new("Text", curve)
         obj.visible_shadow = False
         scene.collection.objects.link(obj)
         obj.parent = group
-        obj.location = (0, 0, z)
+        obj.location = (size * 0.025 if layer == 0 else 0, -size * 0.035 if layer == 0 else 0, z)
         curve.materials.append(material("TextMat", col, emission=1.0 if layer else 0.0))
         key_visible(obj, first, last)
     pop(group, pop_at if pop_at is not None else first, base=CAPTION_SCALE)
@@ -429,12 +429,12 @@ def sound(name, path, channel, frame, volume):
     return strip
 
 
-sound("music", os.path.join(AUDIO, "music.wav"), 1, 1, 0.22)
+sound("music", os.path.join(AUDIO, "music.wav"), 1, 1, 0.12)
 for key in LINES:
-    sound("vo_" + key, os.path.join(VOICE, key + ".wav"), 2, shots[key][2], 1.6)
+    sound("vo_" + key, os.path.join(VOICE, key + ".wav"), 2, shots[key][2], 0.85)
 for i, (name, frame, volume) in enumerate(SFX):
     ch = 3 + i % 5  # spread over channels so overlapping effects don't clash
-    sound(f"sfx_{name}_{i}", os.path.join(AUDIO, name + ".wav"), ch, max(1, frame), volume)
+    sound(f"sfx_{name}_{i}", os.path.join(AUDIO, name + ".wav"), ch, max(1, frame), volume * 0.65)
 
 print(f"TIMELINE {END} frames ({END / FPS:.1f}s): " + ", ".join(f"{k} {v[0]}-{v[1]}" for k, v in shots.items()))
 
