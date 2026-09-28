@@ -93,7 +93,6 @@ jobs:
         run: |
           cp -r build/delivery /tmp/tiktok-delivery
           git switch --orphan promo/tiktok-output
-          git rm -rf --cached .
           cp -r /tmp/tiktok-delivery/* .
           git add -- tiktok-american.mp4 preview.png frame-*.png subtitles.srt README.md metadata.json licenses.txt
           git config user.name 'github-actions[bot]'
