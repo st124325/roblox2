@@ -22,6 +22,24 @@ jobs:
           path: delivery/
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: prepared-scene
+          path: build/
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Master continuous audio and exact video timing
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          curl --fail --retry 3 -L https://download.blender.org/release/Blender4.3/blender-4.3.2-linux-x64.tar.xz -o /tmp/blender.tar.xz
+          tar -xf /tmp/blender.tar.xz -C /tmp
+          /tmp/blender-4.3.2-linux-x64/blender -b build/ad.blend --python tools/video/master_ci.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tiktok-final-main
+          path: delivery/
+          retention-days: 90
       - name: Put finished video and companion files in root
         run: |
           cp delivery/tiktok-american.mp4 tiktok-american.mp4
