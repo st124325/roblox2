@@ -1,0 +1,40 @@
+name: TikTok render diagnostics
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/tiktok-render-check.yml', 'tools/video/diagnose_ci.py']
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: write
+jobs:
+  check:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: prepared-scene
+          path: build/
+          run-id: 36431444436
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y xvfb libgl1-mesa-dri libegl1 libxi6 libxrender1 libxfixes3 libxkbcommon0
+          curl --fail --retry 3 -L https://download.blender.org/release/Blender4.3/blender-4.3.2-linux-x64.tar.xz -o /tmp/blender.tar.xz
+          tar -xf /tmp/blender.tar.xz -C /tmp
+          echo /tmp/blender-4.3.2-linux-x64 >> "$GITHUB_PATH"
+      - name: Time a representative frame
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: |
+          mkdir -p build/diagnostics
+          timeout 180 xvfb-run -a blender -b build/ad.blend -t 4 --python tools/video/diagnose_ci.py -- EEVEE > build/diagnostics/eevee.log 2>&1 || true
+          timeout 180 xvfb-run -a blender -b build/ad.blend -t 4 --python tools/video/diagnose_ci.py -- WORKBENCH > build/diagnostics/workbench.log 2>&1 || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: render-diagnostics
+          path: build/diagnostics/
+          retention-days: 7
