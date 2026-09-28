@@ -200,7 +200,7 @@ box("Belt", (80, 5, 0.8), (X, 0, 0.4), hexcol("#2A2A36"))
 for i in range(16):
     stripe = box("Stripe", (0.5, 5.05, 0.82), (X - 40 + i * 5, 0, 0.41), YELLOW, emission=0.5)
 belt = [("Blob_Mushnub", "$15", "#C9CED8"), ("Blob_Cactoro", "$2K", "#2396FF"), ("Blob_Mushnub_Evolved", "$312K", "#A537FF"),
-        ("Blob_Cat", "$41M", "#FFAF0F"), ("Big_Dino", "$1.4B", "#FF2D55"), ("Flying_Dragon_Evolved", "$216B", "#00FFC8")]
+        ("Blob_Cat", "$41M", "#FFAF0F"), ("Big_Dino", "$1.4B", "#FF2D55"), ("Big_BlueDemon", "$216B", "#00FFC8")]
 for i, (model, price, col) in enumerate(belt):
     m = monster(model, (0, 0, 0), 3.0 if not model.startswith("Big") else 3.6)
     tag = world_text(price, 1.1, hexcol(col), (0, 0, 0), f0, f1)
@@ -227,7 +227,7 @@ for i, model in enumerate(("Blob_Cat", "Big_Frog", "Blob_Fish")):
     for k in range(3):
         t0 = vo + 6 + k * 26 + i * 7
         t1 = min(t0 + 22, f1)
-        pop_text = world_text(("+$1.2K", "+$96K", "+$640")[i], 0.8, GREEN, (px, -0.6, 3.6), t0, t1)
+        pop_text = world_text("+ CASH", 0.8, GREEN, (px, -0.6, 3.6), t0, t1)
         for f, z in ((t0, 3.6 if i != 1 else 4.4), (t1, 5.2 if i != 1 else 6.0)):
             pop_text.location = (px, -0.6, z)
             pop_text.keyframe_insert("location", frame=f)
