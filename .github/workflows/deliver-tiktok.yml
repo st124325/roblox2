@@ -1,0 +1,38 @@
+name: Deliver TikTok video to repository root
+on:
+  workflow_run:
+    workflows: [TikTok American voice ad]
+    types: [completed]
+    branches: [promo/tiktok-american]
+permissions:
+  actions: read
+  contents: write
+jobs:
+  deliver:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/download-artifact@v4
+        with:
+          name: tiktok-american-1080x1920
+          path: delivery/
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Put finished video and companion files in root
+        run: |
+          cp delivery/tiktok-american.mp4 tiktok-american.mp4
+          cp delivery/preview.png tiktok-preview.png
+          cp delivery/subtitles.srt tiktok-american.srt
+          cp delivery/licenses.txt tiktok-licenses.txt
+          cp delivery/README.md TIKTOK-VIDEO.md
+          git add tiktok-american.mp4 tiktok-preview.png tiktok-american.srt tiktok-licenses.txt TIKTOK-VIDEO.md
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Add finished American TikTok ad to repository root'
+          git pull --rebase origin main
+          git push origin HEAD:main
