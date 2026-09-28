@@ -11,6 +11,7 @@ story.register()
 cfg = json.loads((HERE/'config.json').read_text())
 root = HERE.parents[2]
 build = root/'build/heist'
+(build/'parts').mkdir(parents=True, exist_ok=True)
 scene = bpy.context.scene
 mode = sys.argv[sys.argv.index('--')+1]
 if mode == 'preview':
@@ -34,4 +35,3 @@ else:
     scene.render.ffmpeg.audio_codec = 'NONE'
     scene.render.filepath = str(build/f'parts/part-{index:02}.mp4')
     bpy.ops.render.render(animation=True)
-

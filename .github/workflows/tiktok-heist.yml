@@ -96,6 +96,7 @@ jobs:
           CHUNK: ${{ matrix.chunk }}
         run: |
           set -o pipefail
+          mkdir -p build/heist/parts
           xvfb-run -a blender -b build/heist/heist.blend -t 4 --python tools/video/heist/render.py -- "$CHUNK" 2>&1 | tee "build/heist/parts/part-$CHUNK.log"
       - uses: actions/upload-artifact@v4
         if: always()

@@ -1,0 +1,62 @@
+name: Finalize rendered heist
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Run containing heist-prepared and all 20 heist-part artifacts
+        required: true
+        type: string
+  workflow_run:
+    workflows: [TikTok heist film]
+    types: [completed]
+permissions:
+  actions: read
+  contents: write
+jobs:
+  finish:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.id == 36457443280 && github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/download-artifact@v4
+        with:
+          name: heist-prepared
+          path: build/heist/
+          run-id: ${{ inputs.run_id || github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: heist-part-*
+          path: build/heist/parts/
+          merge-multiple: true
+          run-id: ${{ inputs.run_id || github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Assemble complete render and verify media
+        run: |
+          set -o pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg python3-pil fonts-dejavu-core
+          /usr/bin/python3 tools/video/heist/finish.py final 2>&1 | tee build/heist/delivery/finish.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tiktok-heist-final
+          path: build/heist/delivery/
+          retention-days: 90
+      - name: Deliver new film into repository root
+        run: |
+          cp build/heist/delivery/tiktok-heist.mp4 .
+          cp build/heist/delivery/tiktok-heist.srt .
+          cp build/heist/delivery/tiktok-heist-cover.png .
+          cp build/heist/delivery/tiktok-heist-storyboard.jpg .
+          cp build/heist/delivery/HEIST-VIDEO.md .
+          git add tiktok-heist.mp4 tiktok-heist.srt tiktok-heist-cover.png tiktok-heist-storyboard.jpg HEIST-VIDEO.md
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Deliver new narrative heist TikTok film'
+          git pull --rebase origin main
+          git push origin HEAD:main

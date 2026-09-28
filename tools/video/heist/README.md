@@ -17,3 +17,8 @@ frame count and codec checks. Nothing is rendered locally.
 
 Delivery: `tiktok-heist.mp4`, cover, storyboard and SRT. The earlier ad remains
 available as `tiktok-american.mp4`.
+
+To repeat only editing/mastering while artifacts are still available, run
+`Finalize rendered heist` manually with the source Actions run ID. It requires
+the prepared scene and all 20 video chunks, and validates the complete frame
+count before delivery. This does not repeat the 3D render.
