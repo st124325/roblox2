@@ -53,7 +53,7 @@ def update(t):
         pose('Owner', hero.location - Vector((3.8, 0, 0)), PI/2, t, run=True)
         loot.location = held(hero)
         loot.rotation_euler.z = PI/2
-        cam.location = hero.location + Vector((4.8, -7.8, 3.4))
+        cam.location = hero.location + Vector((3.2, -5.0, 3.2))
         face(cam, hero.location + Vector((0, 0, 1.9)))
     elif t < 4.5:
         p = (t - 2.2)/2.3
@@ -68,8 +68,8 @@ def update(t):
         if p > 0.7:
             loot.location = lerp((-12, 6, 1.05), held(hero), (p - 0.7)/0.2)
             loot.rotation_euler.z = PI
-        cam.location = lerp((-7.5, 0, 4.6), (-8.8, 1.7, 3.5), p)
-        face(cam, (-12, 5.2, 2.0))
+        cam.location = lerp((-7.5, 6.8, 4.8), (-8.7, 8.2, 3.8), p)
+        face(cam, lerp(hero.location + Vector((0, 0, 2.1)), (-12, 5.7, 2.0), p))
     elif t < 9.8:
         p = (t - 7.7)/2.1
         pose('Hero', lerp((-12, 4.8, 0), (-12, -3, 0), p), 0, t, run=True, carry=True)

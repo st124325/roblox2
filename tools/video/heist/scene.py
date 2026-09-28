@@ -95,14 +95,11 @@ for x in (-12, 14):
     box('Base back wall', (x, 10, 2.5), (10, 0.35, 5), NAVY)
     for side in (-1, 1):
         box('Base side', (x+side*5, 6.7, 1.55), (0.3, 6.6, 3.1), NAVY)
-        box('Entry post', (x+side*4, 0, 2.35), (0.4, 0.55, 4.7), WALL)
-        box('Post neon', (x+side*4, -0.31, 2.35), (0.1, 0.05, 4.5), accent)
         box('Base rim', (x+side*4.9, 4.9, 0.3), (0.10, 9.7, 0.08), accent)
-    box('Entry arch', (x, 0, 4.8), (8.4, 0.5, 0.5), NAVY)
-    box('Arch neon', (x, -0.29, 4.95), (8.2, 0.06, 0.09), accent)
+    box('Entry threshold', (x, 0, 0.22), (9.8, 0.14, 0.08), accent)
     box('Display plinth', (x, 6, 0.6), (3, 2.4, 1), BLACK, bevel=0.12)
     box('Display light', (x, 6, 1.12), (2.8, 2.25, 0.05), accent)
-    text('OPEN' if x < 0 else 'HOME', (x, -0.30, 4.55), 0.40, accent)
+    text('OPEN' if x < 0 else 'HOME', (x, 9.76, 2.7), 0.40, accent)
     text('SECRET' if x < 0 else 'YOUR BASE', (x, 9.77, 3.4), 0.75, accent)
     box('Back light', (x, 9.7, 4.4), (8, 0.1, 0.1), ALARM if x < 0 else accent)
     # Display slots and architectural details make the bases recognizable.
@@ -116,8 +113,8 @@ for x, y, h in [(-14.4, -0.5, 1.7), (-3, -3, 0.9), (17.6, 8.8, 1.5), (5, 0.7, 1.
     for dx in (-0.65, 0.65):
         box('Crate band', (x+dx, y-0.765, h/2), (0.08, 0.035, h), BLACK)
 for x in range(-28, 33, 8):
-    box('Lamp pole', (x, -7, 2.7), (0.16, 0.16, 5.4), BLACK)
-    box('Lamp cap', (x, -7, 5.4), (0.8, 0.5, 0.15), CYAN)
+    box('Lamp pole', (x, 13, 2.7), (0.16, 0.16, 5.4), BLACK)
+    box('Lamp cap', (x, 13, 5.4), (0.8, 0.5, 0.15), CYAN)
     box('Distant building', (x, 18, 3.5 + (x%3)), (5, 4, 7 + (x%3)*2), NAVY)
     for z in (2, 4, 6):
         box('Window', (x, 15.95, z), (2.8, 0.02, 0.08), CYAN)

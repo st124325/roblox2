@@ -36,13 +36,17 @@ jobs:
           curl --fail --retry 3 -L https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_linux_x86_64.tar.gz -o /tmp/piper.tar.gz
           tar -xf /tmp/piper.tar.gz -C /tmp
       - name: Build characters, environment and American dialogue
-        run: /usr/bin/python3 tools/video/heist/prepare.py
+        run: |
+          set -o pipefail
+          mkdir -p build/heist
+          /usr/bin/python3 tools/video/heist/prepare.py 2>&1 | tee build/heist/prepare.log
       - name: Render and composite storyboard
         env:
           LIBGL_ALWAYS_SOFTWARE: '1'
         run: |
-          xvfb-run -a blender -b build/heist/heist.blend -t 4 --python tools/video/heist/render.py -- preview
-          /usr/bin/python3 tools/video/heist/finish.py preview
+          set -o pipefail
+          xvfb-run -a blender -b build/heist/heist.blend -t 4 --python tools/video/heist/render.py -- preview 2>&1 | tee build/heist/preview.log
+          /usr/bin/python3 tools/video/heist/finish.py preview 2>&1 | tee -a build/heist/preview.log
       - uses: actions/upload-artifact@v4
         with:
           name: heist-storyboard
@@ -90,8 +94,11 @@ jobs:
         env:
           LIBGL_ALWAYS_SOFTWARE: '1'
           CHUNK: ${{ matrix.chunk }}
-        run: xvfb-run -a blender -b build/heist/heist.blend -t 4 --python tools/video/heist/render.py -- "$CHUNK"
+        run: |
+          set -o pipefail
+          xvfb-run -a blender -b build/heist/heist.blend -t 4 --python tools/video/heist/render.py -- "$CHUNK" 2>&1 | tee "build/heist/parts/part-$CHUNK.log"
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: heist-part-${{ matrix.chunk }}
           path: build/heist/parts/
