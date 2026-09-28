@@ -8,6 +8,7 @@ import os
 import random
 import sys
 import wave
+import json
 
 import bpy
 import numpy as np
@@ -78,7 +79,7 @@ def material(name, color, emission=0.0, alpha=1.0, metallic=0.0):
         bsdf.inputs["Emission Strength"].default_value = emission
     if alpha < 1:
         bsdf.inputs["Alpha"].default_value = alpha
-        mat.surface_render_method = "BLENDED"
+        mat.surface_render_method = "DITHERED"
     return mat
 
 
@@ -419,7 +420,7 @@ for name, fn in (("coin", sfx_coin), ("pop", sfx_pop), ("whoosh", sfx_whoosh), (
     write_wav(os.path.join(AUDIO, name + ".wav"), fn())
 
 seq = scene.sequence_editor_create()
-strips = getattr(seq, "strips", None) or seq.sequences
+strips = seq.strips if hasattr(seq, "strips") else seq.sequences
 
 
 def sound(name, path, channel, frame, volume):
@@ -437,7 +438,12 @@ for i, (name, frame, volume) in enumerate(SFX):
 
 print(f"TIMELINE {END} frames ({END / FPS:.1f}s): " + ", ".join(f"{k} {v[0]}-{v[1]}" for k, v in shots.items()))
 
-if STILL is not None:
+if "--prepare" in ARGS:
+    os.makedirs(os.path.dirname(OUT), exist_ok=True)
+    with open(os.path.join(os.path.dirname(OUT), "timeline.json"), "w") as f:
+        json.dump({"fps": FPS, "frames": END, "shots": shots}, f)
+    bpy.ops.wm.save_as_mainfile(filepath=OUT)
+elif STILL is not None:
     scene.frame_set(STILL)
     scene.render.image_settings.file_format = "PNG"
     scene.render.filepath = ARGS[ARGS.index("--still") + 2]
