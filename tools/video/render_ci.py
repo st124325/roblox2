@@ -1,4 +1,4 @@
-"""Render one shot of the prepared scene. Run only on GitHub Actions."""
+"""Render one of 20 chunks of the prepared scene. Run only on GitHub Actions."""
 import bpy
 import json
 import os
