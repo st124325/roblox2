@@ -1,0 +1,139 @@
+name: TikTok heist film
+on:
+  workflow_dispatch:
+    inputs:
+      render_full:
+        description: Render and deliver the complete film
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+    paths: ['tools/video/heist/**', '.github/workflows/tiktok-heist.yml']
+permissions:
+  contents: read
+concurrency:
+  group: tiktok-heist
+  cancel-in-progress: true
+jobs:
+  prepare:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    outputs:
+      full: ${{ steps.mode.outputs.full }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: mode
+        name: Read render mode
+        run: |
+          /usr/bin/python3 -c 'import json; print("full=" + str(json.load(open("tools/video/heist/config.json"))["render_full"]).lower())' >> "$GITHUB_OUTPUT"
+      - name: Install rendering and audio tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg python3-numpy python3-pil fonts-dejavu-core xvfb libgl1-mesa-dri libegl1 libxi6 libxrender1 libxfixes3 libxkbcommon0
+          curl --fail --retry 3 -L https://download.blender.org/release/Blender4.3/blender-4.3.2-linux-x64.tar.xz -o /tmp/blender.tar.xz
+          tar -xf /tmp/blender.tar.xz -C /tmp
+          echo /tmp/blender-4.3.2-linux-x64 >> "$GITHUB_PATH"
+          curl --fail --retry 3 -L https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_linux_x86_64.tar.gz -o /tmp/piper.tar.gz
+          tar -xf /tmp/piper.tar.gz -C /tmp
+      - name: Build characters, environment and American dialogue
+        run: /usr/bin/python3 tools/video/heist/prepare.py
+      - name: Render and composite storyboard
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: |
+          xvfb-run -a blender -b build/heist/heist.blend -t 4 --python tools/video/heist/render.py -- preview
+          /usr/bin/python3 tools/video/heist/finish.py preview
+      - uses: actions/upload-artifact@v4
+        with:
+          name: heist-storyboard
+          path: build/heist/preview/
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        with:
+          name: heist-prepared
+          path: build/heist/
+          retention-days: 7
+      - name: Preserve error logs
+        if: failure()
+        run: |
+          mkdir -p build/heist/diagnostics
+          ls -lh build/heist > build/heist/diagnostics/files.txt || true
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: heist-debug
+          path: build/heist/
+          retention-days: 7
+  render:
+    needs: prepare
+    if: needs.prepare.outputs.full == 'true' || inputs.render_full
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ['00','01','02','03','04','05','06','07','08','09','10','11','12','13','14','15','16','17','18','19']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: heist-prepared
+          path: build/heist/
+      - name: Install Blender
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y xvfb libgl1-mesa-dri libegl1 libxi6 libxrender1 libxfixes3 libxkbcommon0
+          curl --fail --retry 3 -L https://download.blender.org/release/Blender4.3/blender-4.3.2-linux-x64.tar.xz -o /tmp/blender.tar.xz
+          tar -xf /tmp/blender.tar.xz -C /tmp
+          echo /tmp/blender-4.3.2-linux-x64 >> "$GITHUB_PATH"
+      - name: Render animated scene
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+          CHUNK: ${{ matrix.chunk }}
+        run: xvfb-run -a blender -b build/heist/heist.blend -t 4 --python tools/video/heist/render.py -- "$CHUNK"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: heist-part-${{ matrix.chunk }}
+          path: build/heist/parts/
+          retention-days: 7
+  deliver:
+    needs: render
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: heist-prepared
+          path: build/heist/
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: heist-part-*
+          path: build/heist/parts/
+          merge-multiple: true
+      - name: Edit, master audio and verify
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg python3-pil fonts-dejavu-core
+          /usr/bin/python3 tools/video/heist/finish.py final
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tiktok-heist-final
+          path: build/heist/delivery/
+          retention-days: 90
+      - name: Deliver new film into repository root
+        run: |
+          cp build/heist/delivery/tiktok-heist.mp4 .
+          cp build/heist/delivery/tiktok-heist.srt .
+          cp build/heist/delivery/tiktok-heist-cover.png .
+          cp build/heist/delivery/tiktok-heist-storyboard.jpg .
+          cp build/heist/delivery/HEIST-VIDEO.md .
+          git add tiktok-heist.mp4 tiktok-heist.srt tiktok-heist-cover.png tiktok-heist-storyboard.jpg HEIST-VIDEO.md
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Add new heist TikTok film to repository root'
+          git pull --rebase origin main
+          git push origin HEAD:main
